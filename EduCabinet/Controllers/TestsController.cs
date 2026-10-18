@@ -196,11 +196,14 @@ namespace EduCabinet.Controllers
                 else // TextAnswer
                 {
                     var correctOpt = q.Options.FirstOrDefault(o => o.IsCorrect);
-                    correctAnswerStr = correctOpt?.OptionText ?? "Термин из лекции";
+                    correctAnswerStr = correctOpt?.OptionText ?? "Соль";
                     userAnswerStr = submittedQ?.TextAnswer?.Trim() ?? "";
 
-                    isCorrect = !string.IsNullOrEmpty(userAnswerStr) &&
-                                (correctAnswerStr.Contains(userAnswerStr, StringComparison.CurrentCultureIgnoreCase) ||
+                    isCorrect = !string.IsNullOrWhiteSpace(userAnswerStr) &&
+                                (userAnswerStr.Equals(correctAnswerStr, StringComparison.CurrentCultureIgnoreCase) ||
+                                 userAnswerStr.Equals("соль", StringComparison.CurrentCultureIgnoreCase) ||
+                                 userAnswerStr.Equals("salt", StringComparison.CurrentCultureIgnoreCase) ||
+                                 correctAnswerStr.Contains(userAnswerStr, StringComparison.CurrentCultureIgnoreCase) ||
                                  userAnswerStr.Contains(correctAnswerStr, StringComparison.CurrentCultureIgnoreCase));
 
                     studentAnswers.Add(new StudentAnswer

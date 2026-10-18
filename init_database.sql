@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict tLYhHVRhoWsFQ4njOHxEf033JJZEuT0OMyw7BL55FTsWYezhPVs0LVuDjShRJJf
+\restrict HksymvllaMsEEh6zTu5rzmLBGL5L6OyK5GVp7mHj9qy8fcPpkqcaJhantQaLuc0
 
 -- Dumped from database version 18.0
 -- Dumped by pg_dump version 18.0
@@ -527,6 +527,7 @@ COPY public."AnswerOptions" ("Id", "QuestionId", "OptionText", "IsCorrect") FROM
 23	8	pg_scan	f
 24	9	Для соблюдения принципа наименьших привилегий и исключения прямого несанкционированного доступа к данным в обход бизнес-логики приложения	t
 25	9	Потому что PostgreSQL не умеет работать по сети	f
+26	4	Соль	t
 \.
 
 
@@ -565,6 +566,7 @@ COPY public."Disciplines" ("Id", "Title", "Description", "CreatedByTeacherId", "
 COPY public."GroupMemberships" ("Id", "StudentId", "GroupId") FROM stdin;
 1	2	1
 2	3	1
+3	4	1
 \.
 
 
@@ -573,9 +575,10 @@ COPY public."GroupMemberships" ("Id", "StudentId", "GroupId") FROM stdin;
 --
 
 COPY public."LectureProgress" ("Id", "StudentId", "LectureId", "IsCompleted", "IsUnlockedManually", "UnlockedAt", "CompletedAt") FROM stdin;
-1	2	1	f	f	2026-10-18 17:51:34.642106+03	\N
 2	3	1	t	f	2026-10-16 17:51:34.669067+03	2026-10-17 17:51:34.669098+03
 3	3	2	f	f	2026-10-17 17:51:34.66978+03	\N
+4	4	1	f	f	2026-10-18 18:04:09.77326+03	\N
+1	2	1	f	f	2026-10-18 17:51:34.642106+03	\N
 \.
 
 
@@ -595,6 +598,10 @@ COPY public."Lectures" ("Id", "TopicId", "Title", "Description", "Content", "Fil
 --
 
 COPY public."StudentAnswers" ("Id", "AttemptId", "QuestionId", "SelectedOptionIdsJson", "TextAnswer", "IsCorrect") FROM stdin;
+1	2	1	[1]	\N	t
+2	2	2	[5]	\N	t
+3	2	3	[10]	\N	f
+4	2	4	\N	аааа	f
 \.
 
 
@@ -614,6 +621,7 @@ COPY public."StudentGroups" ("Id", "Name") FROM stdin;
 
 COPY public."TestAttempts" ("Id", "StudentId", "TestId", "AttemptNumber", "ScorePercent", "TotalPoints", "EarnedPoints", "IsPassed", "CompletedAt") FROM stdin;
 1	3	1	1	100	5	5	t	2026-10-17 17:51:34.670489+03
+2	4	1	1	40	5	2	f	2026-10-18 18:05:35.928218+03
 \.
 
 
@@ -663,6 +671,8 @@ COPY public."Users" ("Id", "Username", "PasswordHash", "FullName", "Role", "Crea
 1	teacher	AQAAAAIAAYagAAAAENcLkmD6AaQaRH2aoR2z/3EDIPkupVGhZs8UVQngipplWtlyoL4pop2i4M40+Ktsxw==	Парван Даниил Михайлович (Преподаватель)	Teacher	2026-10-18 17:51:33.765703+03
 2	student1	AQAAAAIAAYagAAAAEFbJe/bFGsXDrXYFoN/CSqtcNcb2kM9J0kWtYWtpndfEfXJvO2MG6CSt16IvdlIJyQ==	Иванов Алексей Сергеевич	Student	2026-10-18 17:51:33.872305+03
 3	student2	AQAAAAIAAYagAAAAEHHwX7lsjpMuPAIwV7vXgINH8IgrX5ujLr1hM2c7kQdwduRaiW18fN8dI5ru5Tl0MQ==	Смирнова Екатерина Павловна	Student	2026-10-18 17:51:33.9734+03
+4	Danil	AQAAAAIAAYagAAAAEGXaQofg06EZLblvMBRGvl70+as0faHkNUM0X0cuANEWbFgK99Ok11gNkcXfCkZIfQ==	Макаренко Данил Александрович	Student	2026-10-18 18:03:41.558001+03
+5	Danil1	AQAAAAIAAYagAAAAEAEO276fatR33nd+5gX8JNvRIqmO7ul2mFXp/ncMqPCf20PfxqDf3YG6eXXwgGRLlw==	Danil Makarenko	Teacher	2026-10-18 18:06:34.075091+03
 \.
 
 
@@ -670,7 +680,7 @@ COPY public."Users" ("Id", "Username", "PasswordHash", "FullName", "Role", "Crea
 -- Name: AnswerOptions_Id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public."AnswerOptions_Id_seq"', 25, true);
+SELECT pg_catalog.setval('public."AnswerOptions_Id_seq"', 26, true);
 
 
 --
@@ -698,14 +708,14 @@ SELECT pg_catalog.setval('public."Disciplines_Id_seq"', 1, true);
 -- Name: GroupMemberships_Id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public."GroupMemberships_Id_seq"', 2, true);
+SELECT pg_catalog.setval('public."GroupMemberships_Id_seq"', 3, true);
 
 
 --
 -- Name: LectureProgress_Id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public."LectureProgress_Id_seq"', 3, true);
+SELECT pg_catalog.setval('public."LectureProgress_Id_seq"', 4, true);
 
 
 --
@@ -719,7 +729,7 @@ SELECT pg_catalog.setval('public."Lectures_Id_seq"', 3, true);
 -- Name: StudentAnswers_Id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public."StudentAnswers_Id_seq"', 1, false);
+SELECT pg_catalog.setval('public."StudentAnswers_Id_seq"', 8, true);
 
 
 --
@@ -733,7 +743,7 @@ SELECT pg_catalog.setval('public."StudentGroups_Id_seq"', 2, true);
 -- Name: TestAttempts_Id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public."TestAttempts_Id_seq"', 1, true);
+SELECT pg_catalog.setval('public."TestAttempts_Id_seq"', 3, true);
 
 
 --
@@ -761,7 +771,7 @@ SELECT pg_catalog.setval('public."Topics_Id_seq"', 2, true);
 -- Name: Users_Id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public."Users_Id_seq"', 3, true);
+SELECT pg_catalog.setval('public."Users_Id_seq"', 5, true);
 
 
 --
@@ -1127,5 +1137,5 @@ ALTER TABLE ONLY public."Topics"
 -- PostgreSQL database dump complete
 --
 
-\unrestrict tLYhHVRhoWsFQ4njOHxEf033JJZEuT0OMyw7BL55FTsWYezhPVs0LVuDjShRJJf
+\unrestrict HksymvllaMsEEh6zTu5rzmLBGL5L6OyK5GVp7mHj9qy8fcPpkqcaJhantQaLuc0
 

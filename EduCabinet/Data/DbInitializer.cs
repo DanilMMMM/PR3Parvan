@@ -254,7 +254,9 @@ namespace EduCabinet.Data
                 new AnswerOption { QuestionId = t1q3.Id, OptionText = "HttpOnly (блокирует кражу через JavaScript)", IsCorrect = true },
                 new AnswerOption { QuestionId = t1q3.Id, OptionText = "Secure (передача строго по протоколу HTTPS)", IsCorrect = true },
                 new AnswerOption { QuestionId = t1q3.Id, OptionText = "SameSite=Strict или Lax (защита от CSRF)", IsCorrect = true },
-                new AnswerOption { QuestionId = t1q3.Id, OptionText = "AllowCrossDomainScripting=true", IsCorrect = false }
+                new AnswerOption { QuestionId = t1q3.Id, OptionText = "AllowCrossDomainScripting=true", IsCorrect = false },
+
+                new AnswerOption { QuestionId = t1q4.Id, OptionText = "Соль", IsCorrect = true }
             );
 
             // 8. Test for Lecture 2
