@@ -130,7 +130,7 @@ def create_report(output_path):
     p_meta = doc.add_paragraph()
     p_meta.alignment = WD_ALIGN_PARAGRAPH.RIGHT
     p_meta.paragraph_format.line_spacing = 1.3
-    r_meta = p_meta.add_run("Выполнил студент: Парван Д.М.\nГруппа: ИС-21\nСпециальность: 09.02.07 Информационные системы\nи программирование\n\nПроверил: преподаватель кафедры")
+    r_meta = p_meta.add_run("Выполнил студент: Парван Е.Н.\nГруппа: ИС-21\nСпециальность: 09.02.07 Информационные системы\nи программирование\n\nПроверил: преподаватель кафедры")
     r_meta.font.name = 'Times New Roman'
     r_meta.font.size = Pt(13)
 

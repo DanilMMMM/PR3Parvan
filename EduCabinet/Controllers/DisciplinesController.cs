@@ -93,6 +93,7 @@ namespace EduCabinet.Controllers
         [Authorize(Roles = UserRoles.Teacher)]
         public async Task<IActionResult> Create(Discipline discipline)
         {
+            ModelState.Remove(nameof(discipline.CreatedByTeacher));
             if (ModelState.IsValid)
             {
                 int teacherId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
@@ -127,7 +128,6 @@ namespace EduCabinet.Controllers
             return View(discipline);
         }
 
-        // POST: /Disciplines/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = UserRoles.Teacher)]
@@ -135,6 +135,7 @@ namespace EduCabinet.Controllers
         {
             if (id != model.Id) return NotFound();
 
+            ModelState.Remove(nameof(model.CreatedByTeacher));
             if (ModelState.IsValid)
             {
                 var discipline = await _context.Disciplines.FindAsync(id);

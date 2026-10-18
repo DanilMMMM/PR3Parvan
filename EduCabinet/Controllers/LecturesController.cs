@@ -122,6 +122,7 @@ namespace EduCabinet.Controllers
         [Authorize(Roles = UserRoles.Teacher)]
         public async Task<IActionResult> Create(Lecture lecture, IFormFile? materialFile)
         {
+            ModelState.Remove(nameof(lecture.Topic));
             if (ModelState.IsValid)
             {
                 // Handle file upload
@@ -176,7 +177,6 @@ namespace EduCabinet.Controllers
             return View(lecture);
         }
 
-        // POST: /Lectures/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = UserRoles.Teacher)]
@@ -184,6 +184,7 @@ namespace EduCabinet.Controllers
         {
             if (id != model.Id) return NotFound();
 
+            ModelState.Remove(nameof(model.Topic));
             if (ModelState.IsValid)
             {
                 var lecture = await _context.Lectures.FindAsync(id);

@@ -314,12 +314,12 @@ namespace EduCabinet.Controllers
             });
         }
 
-        // POST: /Tests/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = UserRoles.Teacher)]
         public async Task<IActionResult> Create(Test test)
         {
+            ModelState.Remove(nameof(test.Lecture));
             if (ModelState.IsValid)
             {
                 _context.Tests.Add(test);

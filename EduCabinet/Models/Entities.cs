@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 
 namespace EduCabinet.Models
 {
@@ -35,8 +36,11 @@ namespace EduCabinet.Models
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         // Navigation
+        [ValidateNever]
         public ICollection<GroupMembership> GroupMemberships { get; set; } = new List<GroupMembership>();
+        [ValidateNever]
         public ICollection<LectureProgress> Progresses { get; set; } = new List<LectureProgress>();
+        [ValidateNever]
         public ICollection<TestAttempt> TestAttempts { get; set; } = new List<TestAttempt>();
     }
 
@@ -50,6 +54,7 @@ namespace EduCabinet.Models
         [MaxLength(100)]
         public string Name { get; set; } = string.Empty;
 
+        [ValidateNever]
         public ICollection<GroupMembership> Memberships { get; set; } = new List<GroupMembership>();
     }
 
@@ -61,10 +66,12 @@ namespace EduCabinet.Models
 
         public int StudentId { get; set; }
         [ForeignKey(nameof(StudentId))]
+        [ValidateNever]
         public User Student { get; set; } = null!;
 
         public int GroupId { get; set; }
         [ForeignKey(nameof(GroupId))]
+        [ValidateNever]
         public StudentGroup Group { get; set; } = null!;
     }
 
@@ -74,19 +81,21 @@ namespace EduCabinet.Models
         [Key]
         public int Id { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Введите название дисциплины")]
         [MaxLength(200)]
         public string Title { get; set; } = string.Empty;
 
         [MaxLength(1000)]
-        public string Description { get; set; } = string.Empty;
+        public string? Description { get; set; } = string.Empty;
 
         public int CreatedByTeacherId { get; set; }
         [ForeignKey(nameof(CreatedByTeacherId))]
-        public User CreatedByTeacher { get; set; } = null!;
+        [ValidateNever]
+        public User? CreatedByTeacher { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+        [ValidateNever]
         public ICollection<Topic> Topics { get; set; } = new List<Topic>();
     }
 
@@ -98,14 +107,16 @@ namespace EduCabinet.Models
 
         public int DisciplineId { get; set; }
         [ForeignKey(nameof(DisciplineId))]
-        public Discipline Discipline { get; set; } = null!;
+        [ValidateNever]
+        public Discipline? Discipline { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Введите название темы")]
         [MaxLength(200)]
         public string Title { get; set; } = string.Empty;
 
         public int OrderIndex { get; set; } = 1;
 
+        [ValidateNever]
         public ICollection<Lecture> Lectures { get; set; } = new List<Lecture>();
     }
 
@@ -117,16 +128,17 @@ namespace EduCabinet.Models
 
         public int TopicId { get; set; }
         [ForeignKey(nameof(TopicId))]
-        public Topic Topic { get; set; } = null!;
+        [ValidateNever]
+        public Topic? Topic { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Введите название лекции")]
         [MaxLength(250)]
         public string Title { get; set; } = string.Empty;
 
         [MaxLength(1000)]
-        public string Description { get; set; } = string.Empty;
+        public string? Description { get; set; } = string.Empty;
 
-        public string Content { get; set; } = string.Empty;
+        public string? Content { get; set; } = string.Empty;
 
         [MaxLength(500)]
         public string? FilePath { get; set; }
@@ -138,8 +150,11 @@ namespace EduCabinet.Models
 
         public int MinPassingScore { get; set; } = 70; // 70% passing requirement
 
+        [ValidateNever]
         public ICollection<ControlQuestion> ControlQuestions { get; set; } = new List<ControlQuestion>();
+        [ValidateNever]
         public ICollection<Test> Tests { get; set; } = new List<Test>();
+        [ValidateNever]
         public ICollection<LectureProgress> Progresses { get; set; } = new List<LectureProgress>();
     }
 
@@ -151,14 +166,15 @@ namespace EduCabinet.Models
 
         public int LectureId { get; set; }
         [ForeignKey(nameof(LectureId))]
-        public Lecture Lecture { get; set; } = null!;
+        [ValidateNever]
+        public Lecture? Lecture { get; set; }
 
         [Required]
         public string QuestionText { get; set; } = string.Empty;
 
         [Required]
         [MaxLength(50)]
-        public string QuestionType { get; set; } = "TextAnswer"; // "TextAnswer", "SingleChoice", "MultipleChoice"
+        public string QuestionType { get; set; } = "TextAnswer";
 
         public string CorrectAnswer { get; set; } = string.Empty;
 
@@ -173,7 +189,8 @@ namespace EduCabinet.Models
 
         public int LectureId { get; set; }
         [ForeignKey(nameof(LectureId))]
-        public Lecture Lecture { get; set; } = null!;
+        [ValidateNever]
+        public Lecture? Lecture { get; set; }
 
         [Required]
         [MaxLength(200)]
@@ -185,7 +202,9 @@ namespace EduCabinet.Models
 
         public int TimeLimitMinutes { get; set; } = 15;
 
+        [ValidateNever]
         public ICollection<TestQuestion> Questions { get; set; } = new List<TestQuestion>();
+        [ValidateNever]
         public ICollection<TestAttempt> Attempts { get; set; } = new List<TestAttempt>();
     }
 
@@ -197,16 +216,18 @@ namespace EduCabinet.Models
 
         public int TestId { get; set; }
         [ForeignKey(nameof(TestId))]
-        public Test Test { get; set; } = null!;
+        [ValidateNever]
+        public Test? Test { get; set; }
 
         [Required]
         public string QuestionText { get; set; } = string.Empty;
 
         [MaxLength(50)]
-        public string QuestionType { get; set; } = "SingleChoice"; // "SingleChoice", "MultipleChoice", "TextAnswer"
+        public string QuestionType { get; set; } = "SingleChoice";
 
         public int Points { get; set; } = 1;
 
+        [ValidateNever]
         public ICollection<AnswerOption> Options { get; set; } = new List<AnswerOption>();
     }
 
@@ -218,7 +239,8 @@ namespace EduCabinet.Models
 
         public int QuestionId { get; set; }
         [ForeignKey(nameof(QuestionId))]
-        public TestQuestion Question { get; set; } = null!;
+        [ValidateNever]
+        public TestQuestion? Question { get; set; }
 
         [Required]
         public string OptionText { get; set; } = string.Empty;
@@ -234,11 +256,13 @@ namespace EduCabinet.Models
 
         public int StudentId { get; set; }
         [ForeignKey(nameof(StudentId))]
-        public User Student { get; set; } = null!;
+        [ValidateNever]
+        public User? Student { get; set; }
 
         public int TestId { get; set; }
         [ForeignKey(nameof(TestId))]
-        public Test Test { get; set; } = null!;
+        [ValidateNever]
+        public Test? Test { get; set; }
 
         public int AttemptNumber { get; set; } = 1;
 
@@ -252,6 +276,7 @@ namespace EduCabinet.Models
 
         public DateTime CompletedAt { get; set; } = DateTime.UtcNow;
 
+        [ValidateNever]
         public ICollection<StudentAnswer> Answers { get; set; } = new List<StudentAnswer>();
     }
 
@@ -263,11 +288,13 @@ namespace EduCabinet.Models
 
         public int AttemptId { get; set; }
         [ForeignKey(nameof(AttemptId))]
-        public TestAttempt Attempt { get; set; } = null!;
+        [ValidateNever]
+        public TestAttempt? Attempt { get; set; }
 
         public int QuestionId { get; set; }
         [ForeignKey(nameof(QuestionId))]
-        public TestQuestion Question { get; set; } = null!;
+        [ValidateNever]
+        public TestQuestion? Question { get; set; }
 
         public string? SelectedOptionIdsJson { get; set; }
 
@@ -284,11 +311,13 @@ namespace EduCabinet.Models
 
         public int StudentId { get; set; }
         [ForeignKey(nameof(StudentId))]
-        public User Student { get; set; } = null!;
+        [ValidateNever]
+        public User? Student { get; set; }
 
         public int LectureId { get; set; }
         [ForeignKey(nameof(LectureId))]
-        public Lecture Lecture { get; set; } = null!;
+        [ValidateNever]
+        public Lecture? Lecture { get; set; }
 
         public bool IsCompleted { get; set; } = false;
 
@@ -307,6 +336,7 @@ namespace EduCabinet.Models
 
         public int? TeacherId { get; set; }
         [ForeignKey(nameof(TeacherId))]
+        [ValidateNever]
         public User? Teacher { get; set; }
 
         [Required]

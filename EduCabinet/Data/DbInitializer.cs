@@ -34,7 +34,7 @@ namespace EduCabinet.Data
             var teacher = new User
             {
                 Username = "teacher",
-                FullName = "Парван Даниил Михайлович (Преподаватель)",
+                FullName = "Парван Е.Н. (Преподаватель)",
                 Role = UserRoles.Teacher,
                 CreatedAt = DateTime.UtcNow
             };

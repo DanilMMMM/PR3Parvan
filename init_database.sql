@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict HksymvllaMsEEh6zTu5rzmLBGL5L6OyK5GVp7mHj9qy8fcPpkqcaJhantQaLuc0
+\restrict FCYUSdxk34frMY6H7A3BYSBgVzEbAaWWK8l5YugVpwl6nTBOeXnnizY7qtB1kKC
 
 -- Dumped from database version 18.0
 -- Dumped by pg_dump version 18.0
@@ -537,6 +537,12 @@ COPY public."AnswerOptions" ("Id", "QuestionId", "OptionText", "IsCorrect") FROM
 
 COPY public."AuditLogs" ("Id", "TeacherId", "Action", "Details", "Timestamp") FROM stdin;
 1	1	SystemInit	Первоначальная инициализация учебной системы и заведение дисциплины «Безопасность веб-приложений и информационных систем»	2026-10-18 17:51:34.697805+03
+2	1	ResetAttempts	Преподаватель сбросил попытки прохождения теста «Контрольное тестирование: Аутентификация, хеширование и сессии» для студента Смирнова Екатерина Павловна (Id=3)	2026-10-18 18:24:47.952134+03
+3	1	ManualUnlock	Преподаватель открыл доступ к лекции «Лекция 3. Регламент развёртывания, резервного копирования и мониторинга веб-ресурсов» (Id=3) студенту Смирнова Екатерина Павловна (Id=3). Причина: Ручное открытие преподавателем	2026-10-18 18:24:51.856613+03
+4	1	ManualUnlock	Преподаватель открыл доступ к лекции «Лекция 3. Регламент развёртывания, резервного копирования и мониторинга веб-ресурсов» (Id=3) студенту Макаренко Данил Александрович (Id=4). Причина: Ручное открытие преподавателем	2026-10-18 18:24:58.943473+03
+5	1	ManualUnlock	Преподаватель открыл доступ к лекции «Лекция 2. Уязвимости веб-приложений: SQL-инъекции, XSS и защита на уровне ORM» (Id=2) студенту Макаренко Данил Александрович (Id=4). Причина: Ручное открытие преподавателем	2026-10-18 18:25:00.080406+03
+6	1	ManualUnlock	Преподаватель открыл доступ к лекции «Лекция 1. Основы аутентификации: криптографическое хеширование паролей и защита сессий» (Id=1) студенту Макаренко Данил Александрович (Id=4). Причина: Ручное открытие преподавателем	2026-10-18 18:25:01.177606+03
+7	1	ResetAttempts	Преподаватель сбросил попытки прохождения теста «Контрольное тестирование: Аутентификация, хеширование и сессии» для студента Макаренко Данил Александрович (Id=4)	2026-10-18 18:25:02.945664+03
 \.
 
 
@@ -577,8 +583,13 @@ COPY public."GroupMemberships" ("Id", "StudentId", "GroupId") FROM stdin;
 COPY public."LectureProgress" ("Id", "StudentId", "LectureId", "IsCompleted", "IsUnlockedManually", "UnlockedAt", "CompletedAt") FROM stdin;
 2	3	1	t	f	2026-10-16 17:51:34.669067+03	2026-10-17 17:51:34.669098+03
 3	3	2	f	f	2026-10-17 17:51:34.66978+03	\N
-4	4	1	f	f	2026-10-18 18:04:09.77326+03	\N
-1	2	1	f	f	2026-10-18 17:51:34.642106+03	\N
+1	2	1	t	f	2026-10-18 17:51:34.642106+03	2026-10-18 18:23:24.861439+03
+5	2	2	t	f	2026-10-18 18:23:35.504173+03	2026-10-18 18:23:49.8442+03
+6	2	3	t	f	2026-10-18 18:23:51.036965+03	2026-10-18 18:24:01.12988+03
+7	3	3	f	t	2026-10-18 18:24:51.849232+03	\N
+8	4	3	f	t	2026-10-18 18:24:58.941488+03	\N
+9	4	2	f	t	2026-10-18 18:25:00.078463+03	\N
+4	4	1	f	t	2026-10-18 18:25:01.175753+03	\N
 \.
 
 
@@ -598,10 +609,15 @@ COPY public."Lectures" ("Id", "TopicId", "Title", "Description", "Content", "Fil
 --
 
 COPY public."StudentAnswers" ("Id", "AttemptId", "QuestionId", "SelectedOptionIdsJson", "TextAnswer", "IsCorrect") FROM stdin;
-1	2	1	[1]	\N	t
-2	2	2	[5]	\N	t
-3	2	3	[10]	\N	f
-4	2	4	\N	аааа	f
+9	4	1	[1]	\N	t
+10	4	2	[5]	\N	t
+11	4	3	[8,9,10]	\N	t
+12	4	4	\N	Соль	t
+13	5	5	[12]	\N	t
+14	5	6	[15]	\N	t
+15	5	7	[18]	\N	t
+16	6	8	[21]	\N	t
+17	6	9	[24]	\N	t
 \.
 
 
@@ -620,8 +636,9 @@ COPY public."StudentGroups" ("Id", "Name") FROM stdin;
 --
 
 COPY public."TestAttempts" ("Id", "StudentId", "TestId", "AttemptNumber", "ScorePercent", "TotalPoints", "EarnedPoints", "IsPassed", "CompletedAt") FROM stdin;
-1	3	1	1	100	5	5	t	2026-10-17 17:51:34.670489+03
-2	4	1	1	40	5	2	f	2026-10-18 18:05:35.928218+03
+4	2	1	1	100	5	5	t	2026-10-18 18:23:24.551066+03
+5	2	2	1	100	3	3	t	2026-10-18 18:23:49.835637+03
+6	2	3	1	100	2	2	t	2026-10-18 18:24:01.122385+03
 \.
 
 
@@ -668,11 +685,11 @@ COPY public."Topics" ("Id", "DisciplineId", "Title", "OrderIndex") FROM stdin;
 --
 
 COPY public."Users" ("Id", "Username", "PasswordHash", "FullName", "Role", "CreatedAt") FROM stdin;
-1	teacher	AQAAAAIAAYagAAAAENcLkmD6AaQaRH2aoR2z/3EDIPkupVGhZs8UVQngipplWtlyoL4pop2i4M40+Ktsxw==	Парван Даниил Михайлович (Преподаватель)	Teacher	2026-10-18 17:51:33.765703+03
 2	student1	AQAAAAIAAYagAAAAEFbJe/bFGsXDrXYFoN/CSqtcNcb2kM9J0kWtYWtpndfEfXJvO2MG6CSt16IvdlIJyQ==	Иванов Алексей Сергеевич	Student	2026-10-18 17:51:33.872305+03
 3	student2	AQAAAAIAAYagAAAAEHHwX7lsjpMuPAIwV7vXgINH8IgrX5ujLr1hM2c7kQdwduRaiW18fN8dI5ru5Tl0MQ==	Смирнова Екатерина Павловна	Student	2026-10-18 17:51:33.9734+03
 4	Danil	AQAAAAIAAYagAAAAEGXaQofg06EZLblvMBRGvl70+as0faHkNUM0X0cuANEWbFgK99Ok11gNkcXfCkZIfQ==	Макаренко Данил Александрович	Student	2026-10-18 18:03:41.558001+03
 5	Danil1	AQAAAAIAAYagAAAAEAEO276fatR33nd+5gX8JNvRIqmO7ul2mFXp/ncMqPCf20PfxqDf3YG6eXXwgGRLlw==	Danil Makarenko	Teacher	2026-10-18 18:06:34.075091+03
+1	teacher	AQAAAAIAAYagAAAAENcLkmD6AaQaRH2aoR2z/3EDIPkupVGhZs8UVQngipplWtlyoL4pop2i4M40+Ktsxw==	Парван Е.Н.	Teacher	2026-10-18 17:51:33.765703+03
 \.
 
 
@@ -687,7 +704,7 @@ SELECT pg_catalog.setval('public."AnswerOptions_Id_seq"', 26, true);
 -- Name: AuditLogs_Id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public."AuditLogs_Id_seq"', 1, true);
+SELECT pg_catalog.setval('public."AuditLogs_Id_seq"', 7, true);
 
 
 --
@@ -715,7 +732,7 @@ SELECT pg_catalog.setval('public."GroupMemberships_Id_seq"', 3, true);
 -- Name: LectureProgress_Id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public."LectureProgress_Id_seq"', 4, true);
+SELECT pg_catalog.setval('public."LectureProgress_Id_seq"', 9, true);
 
 
 --
@@ -729,7 +746,7 @@ SELECT pg_catalog.setval('public."Lectures_Id_seq"', 3, true);
 -- Name: StudentAnswers_Id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public."StudentAnswers_Id_seq"', 8, true);
+SELECT pg_catalog.setval('public."StudentAnswers_Id_seq"', 17, true);
 
 
 --
@@ -743,7 +760,7 @@ SELECT pg_catalog.setval('public."StudentGroups_Id_seq"', 2, true);
 -- Name: TestAttempts_Id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public."TestAttempts_Id_seq"', 3, true);
+SELECT pg_catalog.setval('public."TestAttempts_Id_seq"', 6, true);
 
 
 --
@@ -1137,5 +1154,5 @@ ALTER TABLE ONLY public."Topics"
 -- PostgreSQL database dump complete
 --
 
-\unrestrict HksymvllaMsEEh6zTu5rzmLBGL5L6OyK5GVp7mHj9qy8fcPpkqcaJhantQaLuc0
+\unrestrict FCYUSdxk34frMY6H7A3BYSBgVzEbAaWWK8l5YugVpwl6nTBOeXnnizY7qtB1kKC
 
