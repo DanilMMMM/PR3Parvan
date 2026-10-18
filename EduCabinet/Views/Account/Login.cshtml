@@ -1,0 +1,75 @@
+@model EduCabinet.Models.LoginViewModel
+@{
+    ViewData["Title"] = "Авторизация в системе";
+}
+
+<div class="row justify-content-center pt-4">
+    <div class="col-md-5">
+        <div class="card shadow-sm border-0 rounded-3">
+            <div class="card-header bg-primary text-white text-center py-3">
+                <h4 class="mb-0 fw-bold"><i class="bi bi-box-arrow-in-right me-2"></i>Вход в систему</h4>
+                <small class="opacity-75">Электронный учебный кабинет</small>
+            </div>
+            <div class="card-body p-4">
+                <form asp-action="Login" asp-route-returnurl="@ViewData["ReturnUrl"]" method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="Username" class="form-label fw-semibold"></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-person"></i></span>
+                            <input asp-for="Username" class="form-control" id="loginUsername" placeholder="Введите логин" autofocus />
+                        </div>
+                        <span asp-validation-for="Username" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Password" class="form-label fw-semibold"></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-key"></i></span>
+                            <input asp-for="Password" class="form-control" id="loginPassword" placeholder="Введите пароль" />
+                        </div>
+                        <span asp-validation-for="Password" class="text-danger small"></span>
+                    </div>
+
+                    <div class="d-grid mb-3">
+                        <button type="submit" class="btn btn-primary btn-lg fw-bold">Войти</button>
+                    </div>
+
+                    <div class="text-center">
+                        <span class="text-muted">Нет учетной записи?</span>
+                        <a asp-action="Register" class="text-decoration-none fw-semibold">Зарегистрироваться</a>
+                    </div>
+                </form>
+
+                <hr class="my-4" />
+
+                <div class="p-3 bg-light rounded border">
+                    <h6 class="fw-bold mb-2 text-dark"><i class="bi bi-info-circle me-1 text-primary"></i>Тестовые учётные записи для демонстрации:</h6>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button type="button" class="btn btn-outline-warning btn-sm text-dark fw-bold" onclick="fillTeacher()">
+                            <i class="bi bi-person-badge me-1"></i>Преподаватель (teacher / Teacher123!)
+                        </button>
+                        <button type="button" class="btn btn-outline-info btn-sm text-dark fw-bold" onclick="fillStudent()">
+                            <i class="bi bi-person-fill me-1"></i>Студент 1 (student1 / Student123!)
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        function fillTeacher() {
+            document.getElementById('loginUsername').value = 'teacher';
+            document.getElementById('loginPassword').value = 'Teacher123!';
+        }
+        function fillStudent() {
+            document.getElementById('loginUsername').value = 'student1';
+            document.getElementById('loginPassword').value = 'Student123!';
+        }
+    </script>
+}

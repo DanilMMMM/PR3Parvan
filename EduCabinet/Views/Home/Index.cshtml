@@ -1,0 +1,82 @@
+@{
+    ViewData["Title"] = "Главная страница";
+}
+
+<div class="p-5 mb-4 bg-white rounded-3 shadow-sm border">
+    <div class="container-fluid py-3">
+        <div class="d-flex align-items-center gap-3 mb-3">
+            <span class="badge bg-primary fs-6 px-3 py-2"><i class="bi bi-shield-lock-fill me-1"></i>Практическое задание №3</span>
+            <span class="badge bg-success fs-6 px-3 py-2">ASP.NET Core MVC + PostgreSQL</span>
+        </div>
+        <h1 class="display-5 fw-bold text-dark">Электронный учебный кабинет</h1>
+        <p class="col-md-9 fs-5 text-muted">
+            Информационный ресурс для организации учебного процесса: публикация теоретических материалов, контроль усвоения знаний, интерактивное тестирование и <strong>последовательное открытие новых тем с серверной защитой доступа</strong>.
+        </p>
+        <div class="d-flex gap-3 mt-4">
+            <a asp-controller="Account" asp-action="Login" class="btn btn-primary btn-lg px-4 fw-bold">
+                <i class="bi bi-box-arrow-in-right me-2"></i>Войти в кабинет
+            </a>
+            <a asp-controller="Account" asp-action="Register" class="btn btn-outline-secondary btn-lg px-4">
+                Регистрация
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body p-4">
+                <div class="text-primary mb-3"><i class="bi bi-lock-fill fs-1"></i></div>
+                <h5 class="card-title fw-bold">Последовательное открытие</h5>
+                <p class="card-text text-muted">
+                    Студент не может перейти к следующей лекции, пока не изучит текущую и не сдаст контрольный тест не ниже 70%. Блокировка строго контролируется на сервере.
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body p-4">
+                <div class="text-warning mb-3"><i class="bi bi-person-video3 fs-1"></i></div>
+                <h5 class="card-title fw-bold">Кабинет преподавателя</h5>
+                <p class="card-text text-muted">
+                    Создание дисциплин, тем, загрузка материалов в DOCX/PDF, редактирование контрольных вопросов и тестов, журнал успеваемости и ручная разблокировка.
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body p-4">
+                <div class="text-success mb-3"><i class="bi bi-clipboard2-check-fill fs-1"></i></div>
+                <h5 class="card-title fw-bold">Интерактивное тестирование</h5>
+                <p class="card-text text-muted">
+                    Автоматическая проверка одиночных, множественных и текстовых ответов, расчёт процента, учёт попыток и мгновенная фиксация результатов в СУБД PostgreSQL.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm bg-white p-4">
+    <h5 class="fw-bold text-dark mb-3"><i class="bi bi-info-circle-fill text-primary me-2"></i>Параметры демонстрации системы:</h5>
+    <div class="row">
+        <div class="col-md-6 mb-2">
+            <div class="p-3 bg-light rounded border">
+                <span class="badge bg-warning text-dark mb-2">Роль: Преподаватель</span>
+                <div><strong>Логин:</strong> <code>teacher</code></div>
+                <div><strong>Пароль:</strong> <code>Teacher123!</code></div>
+                <small class="text-muted">Полный доступ к управлению дисциплинами, тестами и студентами.</small>
+            </div>
+        </div>
+        <div class="col-md-6 mb-2">
+            <div class="p-3 bg-light rounded border">
+                <span class="badge bg-info text-dark mb-2">Роль: Студент</span>
+                <div><strong>Логин:</strong> <code>student1</code> (или <code>student2</code>)</div>
+                <div><strong>Пароль:</strong> <code>Student123!</code></div>
+                <small class="text-muted">Личный кабинет, прогресс, сдача тестов с последовательным открытием.</small>
+            </div>
+        </div>
+    </div>
+</div>

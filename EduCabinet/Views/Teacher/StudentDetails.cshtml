@@ -1,0 +1,171 @@
+@using EduCabinet.Models
+@{
+    ViewData["Title"] = "Управление студентом";
+    var student = ViewBag.Student as User;
+    var attempts = ViewBag.Attempts as List<TestAttempt> ?? new List<TestAttempt>();
+    var progresses = ViewBag.Progresses as List<LectureProgress> ?? new List<LectureProgress>();
+    var disciplines = ViewBag.Disciplines as List<Discipline> ?? new List<Discipline>();
+    var groupName = student?.GroupMemberships.FirstOrDefault()?.Group?.Name ?? "Без группы";
+}
+
+<div class="mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-action="Index">Панель преподавателя</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Студент: @student?.FullName</li>
+        </ol>
+    </nav>
+
+    <div class="card shadow-sm border-0 rounded-3 mb-4">
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                    <h3 class="fw-bold mb-1 text-dark"><i class="bi bi-person-badge text-primary me-2"></i>@student?.FullName</h3>
+                    <div class="text-muted small">
+                        <span>Логин: <strong>@student?.Username</strong></span> | 
+                        <span>Учебная группа: <span class="badge bg-secondary">@groupName</span></span> | 
+                        <span>Дата регистрации: @student?.CreatedAt.ToString("dd.MM.yyyy")</span>
+                    </div>
+                </div>
+                <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left me-1"></i>Вернуться к списку студентов
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lectures Status & Manual Overrides -->
+<div class="card shadow-sm border-0 rounded-3 mb-4">
+    <div class="card-header bg-white py-3 border-bottom">
+        <h5 class="fw-bold mb-0 text-dark">
+            <i class="bi bi-unlock-fill text-warning me-2"></i>Статус лекций и ручное открытие доступа
+        </h5>
+    </div>
+    <div class="card-body p-4">
+        <p class="text-muted small mb-3">
+            Если студент столкнулся со сложностями или исчерпал попытки, преподаватель может вручную открыть доступ к любой лекции или сбросить попытки тестирования. Каждое действие фиксируется в журнале аудита.
+        </p>
+
+        @foreach (var d in disciplines)
+        {
+            <h6 class="fw-bold text-primary mt-3 mb-2"><i class="bi bi-book me-1"></i>@d.Title</h6>
+            <div class="list-group mb-3">
+                @foreach (var topic in d.Topics.OrderBy(t => t.OrderIndex))
+                {
+                    @foreach (var lecture in topic.Lectures.OrderBy(l => l.OrderIndex))
+                    {
+                        var prog = progresses.FirstOrDefault(p => p.LectureId == lecture.Id);
+                        bool isCompleted = prog?.IsCompleted ?? false;
+                        bool isUnlockedManually = prog?.IsUnlockedManually ?? false;
+                        var test = lecture.Tests.FirstOrDefault();
+                        var testAttempts = test != null ? attempts.Where(a => a.TestId == test.Id).ToList() : new List<TestAttempt>();
+
+                        <div class="list-group-item d-flex justify-content-between align-items-center flex-wrap gap-2 p-3">
+                            <div>
+                                <span class="badge bg-light text-dark border me-2">@topic.Title</span>
+                                <strong>@lecture.Title</strong>
+                                <div class="small mt-1">
+                                    @if (isCompleted)
+                                    {
+                                        <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Тема освоена</span>
+                                    }
+                                    @if (isUnlockedManually)
+                                    {
+                                        <span class="badge bg-warning text-dark"><i class="bi bi-key-fill me-1"></i>Открыто преподавателем вручную</span>
+                                    }
+                                    @if (!isCompleted && !isUnlockedManually)
+                                    {
+                                        <span class="badge bg-secondary">Обычный режим последовательности</span>
+                                    }
+                                    <span class="text-muted ms-2">Попыток сдачи теста: @testAttempts.Count</span>
+                                </div>
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                @if (!isCompleted && !isUnlockedManually)
+                                {
+                                    <form asp-action="ManualUnlock" method="post" class="d-inline">
+                                        <input type="hidden" name="studentId" value="@student?.Id" />
+                                        <input type="hidden" name="lectureId" value="@lecture.Id" />
+                                        <input type="hidden" name="reason" value="Ручное открытие преподавателем" />
+                                        <button type="submit" class="btn btn-warning btn-sm fw-bold">
+                                            <i class="bi bi-unlock me-1"></i>Открыть доступ
+                                        </button>
+                                    </form>
+                                }
+
+                                @if (test != null && testAttempts.Any())
+                                {
+                                    <form asp-action="ResetAttempts" method="post" class="d-inline" onsubmit="return confirm('Сбросить все попытки по этому тесту для студента?');">
+                                        <input type="hidden" name="studentId" value="@student?.Id" />
+                                        <input type="hidden" name="testId" value="@test.Id" />
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                                            <i class="bi bi-arrow-counterclockwise me-1"></i>Сбросить попытки
+                                        </button>
+                                    </form>
+                                }
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Attempts History -->
+<div class="card shadow-sm border-0 rounded-3 mb-4">
+    <div class="card-header bg-white py-3 border-bottom">
+        <h5 class="fw-bold mb-0 text-dark">
+            <i class="bi bi-clock-history text-primary me-2"></i>История попыток тестирования
+        </h5>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Тест / Лекция</th>
+                    <th>Попытка №</th>
+                    <th>Набранный балл</th>
+                    <th>Процент</th>
+                    <th>Статус</th>
+                    <th>Дата и время</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!attempts.Any())
+                {
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">Студент ещё не проходил тестирование.</td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var att in attempts)
+                    {
+                        <tr>
+                            <td class="fw-bold">@att.Test?.Title</td>
+                            <td>№@att.AttemptNumber</td>
+                            <td>@att.EarnedPoints / @att.TotalPoints</td>
+                            <td>
+                                <strong class="@(att.IsPassed ? "text-success" : "text-danger")">@att.ScorePercent%</strong>
+                            </td>
+                            <td>
+                                @if (att.IsPassed)
+                                {
+                                    <span class="badge bg-success">Сдано</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">Не сдано</span>
+                                }
+                            </td>
+                            <td class="small text-muted">@att.CompletedAt.ToString("dd.MM.yyyy HH:mm:ss")</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,117 @@
+@model EduCabinet.Models.TestResultViewModel
+@{
+    ViewData["Title"] = "Результаты тестирования";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-9">
+        <div class="card shadow-sm border-0 rounded-3 mb-4">
+            <div class="card-header @(Model.IsPassed ? "bg-success" : "bg-danger") text-white py-4 text-center">
+                @if (Model.IsPassed)
+                {
+                    <i class="bi bi-patch-check-fill fs-1"></i>
+                    <h2 class="fw-bold mt-2 mb-0">Тестирование успешно сдано!</h2>
+                    <p class="opacity-75 mb-0">Поздравляем! Требование для освоения темы выполнено.</p>
+                }
+                else
+                {
+                    <i class="bi bi-x-circle-fill fs-1"></i>
+                    <h2 class="fw-bold mt-2 mb-0">Тестирование не пройдено</h2>
+                    <p class="opacity-75 mb-0">Результат ниже требуемого проходного порога (@Model.PassingScorePercent%).</p>
+                }
+            </div>
+
+            <div class="card-body p-4">
+                <div class="row text-center g-3 mb-4">
+                    <div class="col-md-4">
+                        <div class="p-3 bg-light rounded border">
+                            <span class="text-muted small">Ваш результат:</span>
+                            <div class="fs-2 fw-bold @(Model.IsPassed ? "text-success" : "text-danger")">@Model.ScorePercent%</div>
+                            <span class="small text-muted">@Model.EarnedPoints из @Model.TotalPoints баллов</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 bg-light rounded border">
+                            <span class="text-muted small">Проходной порог:</span>
+                            <div class="fs-2 fw-bold text-dark">@Model.PassingScorePercent%</div>
+                            <span class="small text-muted">Минимум для перехода</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 bg-light rounded border">
+                            <span class="text-muted small">Номер попытки:</span>
+                            <div class="fs-2 fw-bold text-primary">@Model.AttemptNumber</div>
+                            <span class="small text-muted">Осталось попыток: @Model.RemainingAttempts</span>
+                        </div>
+                    </div>
+                </div>
+
+                @if (Model.NextLectureUnlocked)
+                {
+                    <div class="alert alert-success d-flex align-items-center justify-content-between p-3 mb-4">
+                        <div class="d-flex align-items-center gap-3">
+                            <i class="bi bi-unlock-fill fs-2 text-success"></i>
+                            <div>
+                                <h5 class="fw-bold mb-1">Следующая лекция разблокирована!</h5>
+                                <p class="mb-0 small">Система проверила результаты теста и открыла вам доступ к следующему учебному материалу.</p>
+                            </div>
+                        </div>
+                        <a asp-controller="Lectures" asp-action="Details" asp-route-id="@Model.NextLectureId" class="btn btn-success fw-bold px-3">
+                            Перейти к следующей лекции <i class="bi bi-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                }
+                else if (!Model.IsPassed)
+                {
+                    <div class="alert alert-warning p-3 mb-4">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        Следующая лекция остаётся <strong>заблокированной</strong> до успешной сдачи теста.
+                        @if (Model.RemainingAttempts > 0)
+                        {
+                            <span>Повторите материал лекции и пройдите тестирование снова.</span>
+                        }
+                        else
+                        {
+                            <span>Вы исчерпали все попытки. Для разблокировки обратитесь к преподавателю.</span>
+                        }
+                    </div>
+                }
+
+                <h5 class="fw-bold mb-3 mt-4"><i class="bi bi-list-check me-2 text-primary"></i>Детализация ответов:</h5>
+
+                <div class="list-group mb-4">
+                    @for (int i = 0; i < Model.Questions.Count; i++)
+                    {
+                        var q = Model.Questions[i];
+                        <div class="list-group-item p-3 @(q.IsCorrect ? "list-group-item-success" : "list-group-item-danger")">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <span class="fw-bold">
+                                    <span class="badge @(q.IsCorrect ? "bg-success" : "bg-danger") me-2">
+                                        @(q.IsCorrect ? "Верно" : "Ошибка")
+                                    </span>
+                                    Вопрос @(i + 1): @q.QuestionText
+                                </span>
+                            </div>
+                            <div class="small ms-4">
+                                <div><strong>Ваш ответ:</strong> @q.UserAnswer</div>
+                                @if (!q.IsCorrect)
+                                {
+                                    <div class="text-success mt-1"><strong>Правильный ответ:</strong> @q.CorrectAnswer</div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a asp-controller="Lectures" asp-action="Details" asp-route-id="@Model.LectureId" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i>К материалу лекции
+                    </a>
+                    <a asp-controller="Disciplines" asp-action="Details" asp-route-id="@Model.DisciplineId" class="btn btn-primary fw-bold">
+                        <i class="bi bi-journal-text me-1"></i>К оглавлению дисциплины
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

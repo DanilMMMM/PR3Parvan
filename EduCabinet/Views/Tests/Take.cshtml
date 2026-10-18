@@ -1,0 +1,107 @@
+@model EduCabinet.Models.TestTakeViewModel
+@{
+    ViewData["Title"] = Model.TestTitle;
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-9">
+        <div class="card shadow-sm border-0 rounded-3 mb-4">
+            <div class="card-header bg-primary text-white py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                    <h4 class="mb-0 fw-bold"><i class="bi bi-pencil-square me-2"></i>@Model.TestTitle</h4>
+                    <small class="opacity-75">К лекции: @Model.LectureTitle</small>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <span class="badge bg-light text-dark fs-6">
+                        <i class="bi bi-clock me-1"></i>Ограничение: @Model.TimeLimitMinutes мин.
+                    </span>
+                    <span class="badge bg-warning text-dark fs-6">
+                        Попытка: @Model.CurrentAttemptNumber из @Model.MaxAttempts
+                    </span>
+                </div>
+            </div>
+
+            <div class="card-body p-4">
+                <div class="alert alert-info py-2 d-flex align-items-center justify-content-between">
+                    <div>
+                        <i class="bi bi-info-circle-fill me-2"></i>Проходной балл для разблокировки следующей лекции: <strong>@Model.PassingScorePercent%</strong>
+                    </div>
+                    <div class="fw-bold">Всего вопросов: @Model.Questions.Count</div>
+                </div>
+
+                <form asp-action="SubmitTest" method="post" id="testForm">
+                    <input type="hidden" asp-for="TestId" />
+                    <input type="hidden" asp-for="LectureId" />
+
+                    @for (int i = 0; i < Model.Questions.Count; i++)
+                    {
+                        var q = Model.Questions[i];
+                        <div class="card mb-4 border">
+                            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                <span class="fw-bold text-dark">
+                                    <span class="badge bg-primary me-2">Вопрос @(i + 1)</span>
+                                    @q.QuestionText
+                                </span>
+                                <span class="badge bg-secondary-subtle text-dark border">@q.Points балл(ов)</span>
+                            </div>
+                            <div class="card-body">
+                                <input type="hidden" name="Questions[@i].QuestionId" value="@q.QuestionId" />
+                                <input type="hidden" name="Questions[@i].QuestionType" value="@q.QuestionType" />
+
+                                @if (q.QuestionType == "SingleChoice")
+                                {
+                                    <p class="text-muted small mb-2"><i class="bi bi-ui-radios me-1"></i>Выберите один правильный ответ:</p>
+                                    @foreach (var opt in q.Options)
+                                    {
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="radio" 
+                                                   name="Questions[@i].SelectedOptionId" 
+                                                   id="opt_@(q.QuestionId)_@(opt.OptionId)" 
+                                                   value="@opt.OptionId" />
+                                            <label class="form-check-label" for="opt_@(q.QuestionId)_@(opt.OptionId)">
+                                                @opt.OptionText
+                                            </label>
+                                        </div>
+                                    }
+                                }
+                                else if (q.QuestionType == "MultipleChoice")
+                                {
+                                    <p class="text-muted small mb-2"><i class="bi bi-ui-checks me-1"></i>Выберите все правильные ответы (множественный выбор):</p>
+                                    @for (int j = 0; j < q.Options.Count; j++)
+                                    {
+                                        var opt = q.Options[j];
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" 
+                                                   name="Questions[@i].SelectedOptionIds" 
+                                                   id="opt_@(q.QuestionId)_@(opt.OptionId)" 
+                                                   value="@opt.OptionId" />
+                                            <label class="form-check-label" for="opt_@(q.QuestionId)_@(opt.OptionId)">
+                                                @opt.OptionText
+                                            </label>
+                                        </div>
+                                    }
+                                }
+                                else // TextAnswer
+                                {
+                                    <p class="text-muted small mb-2"><i class="bi bi-input-cursor-text me-1"></i>Введите краткий текстовый ответ или термин:</p>
+                                    <input type="text" class="form-control" 
+                                           name="Questions[@i].TextAnswer" 
+                                           placeholder="Введите ваш ответ..." />
+                                }
+                            </div>
+                        </div>
+                    }
+
+                    <div class="d-flex justify-content-between align-items-center mt-4">
+                        <a asp-controller="Lectures" asp-action="Details" asp-route-id="@Model.LectureId" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-1"></i>Вернуться к лекции
+                        </a>
+                        <button type="submit" class="btn btn-success btn-lg fw-bold px-4" onclick="return confirm('Вы уверены, что хотите завершить тестирование и отправить ответы?')">
+                            <i class="bi bi-check2-circle me-1"></i>Завершить тестирование
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

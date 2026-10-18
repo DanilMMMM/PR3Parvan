@@ -1,0 +1,190 @@
+@model EduCabinet.Models.StudentDashboardViewModel
+@{
+    ViewData["Title"] = "Личный кабинет студента";
+}
+
+<div class="card shadow-sm border-0 rounded-3 mb-4">
+    <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                <span class="badge bg-info text-dark mb-2">Студент</span>
+                <h2 class="fw-bold text-dark mb-1">@Model.Student.FullName</h2>
+                <div class="text-muted small">
+                    <span>Учебная группа: <strong class="text-dark">@Model.GroupName</strong></span> | 
+                    <span>Логин: <strong>@Model.Student.Username</strong></span>
+                </div>
+            </div>
+            <div>
+                <a asp-controller="Disciplines" asp-action="Index" class="btn btn-primary fw-bold shadow-sm">
+                    <i class="bi bi-book me-1"></i>Каталог дисциплин
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h4 class="fw-bold mb-3"><i class="bi bi-mortarboard-fill text-primary me-2"></i>Мои учебные дисциплины</h4>
+
+@if (!Model.Disciplines.Any())
+{
+    <div class="alert alert-info">В системе пока нет активных дисциплин.</div>
+}
+else
+{
+    @foreach (var d in Model.Disciplines)
+    {
+        <div class="card shadow-sm border-0 rounded-3 mb-4">
+            <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                    <h5 class="fw-bold mb-0 text-dark">@d.Title</h5>
+                    <small class="text-muted">@d.Description</small>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-primary fs-6">@d.ProgressPercent% освоено</span>
+                </div>
+            </div>
+            <div class="card-body p-4">
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between small text-muted mb-1">
+                        <span>Прогресс изучения: @d.CompletedLectures из @d.TotalLectures лекций</span>
+                        <span class="fw-bold">@d.ProgressPercent%</span>
+                    </div>
+                    <div class="progress" style="height: 10px;">
+                        <div class="progress-bar bg-success" style="width: @d.ProgressPercent%"></div>
+                    </div>
+                </div>
+
+                <div class="accordion" id="accordion-@d.DisciplineId">
+                    @for (int tIdx = 0; tIdx < d.Topics.Count; tIdx++)
+                    {
+                        var topic = d.Topics[tIdx];
+                        <div class="accordion-item mb-2 border rounded">
+                            <h2 class="accordion-header" id="heading-@topic.TopicId">
+                                <button class="accordion-button @(tIdx > 0 ? "collapsed" : "")" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-@topic.TopicId" aria-expanded="@(tIdx == 0 ? "true" : "false")">
+                                    <i class="bi bi-folder2 text-warning me-2"></i>
+                                    <strong>@topic.Title</strong>
+                                </button>
+                            </h2>
+                            <div id="collapse-@topic.TopicId" class="accordion-collapse collapse @(tIdx == 0 ? "show" : "")" data-bs-parent="#accordion-@d.DisciplineId">
+                                <div class="accordion-body p-0">
+                                    <div class="list-group list-group-flush">
+                                        @foreach (var lec in topic.Lectures)
+                                        {
+                                            <div class="list-group-item d-flex justify-content-between align-items-center p-3 @(!lec.IsUnlocked ? "bg-light" : "")">
+                                                <div class="d-flex align-items-center gap-3">
+                                                    @if (lec.IsCompleted)
+                                                    {
+                                                        <i class="bi bi-check-circle-fill text-success fs-4" title="Лекция освоена"></i>
+                                                    }
+                                                    else if (lec.IsUnlocked)
+                                                    {
+                                                        <i class="bi bi-unlock-fill text-primary fs-4" title="Доступ открыт"></i>
+                                                    }
+                                                    else
+                                                    {
+                                                        <i class="bi bi-lock-fill text-danger fs-4" title="Заблокировано"></i>
+                                                    }
+
+                                                    <div>
+                                                        <div class="fw-bold text-dark">@lec.Title</div>
+                                                        <div class="small text-muted">
+                                                            @if (lec.IsCompleted)
+                                                            {
+                                                                <span class="text-success fw-semibold"><i class="bi bi-check2"></i> Завершено (лучший балл: @lec.BestScorePercent%)</span>
+                                                            }
+                                                            else if (lec.IsUnlocked)
+                                                            {
+                                                                <span class="text-primary"><i class="bi bi-play-circle"></i> Доступно для прохождения</span>
+                                                            }
+                                                            else
+                                                            {
+                                                                <span class="text-danger"><i class="bi bi-lock"></i> Закрыто: сдайте предыдущий тест</span>
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div>
+                                                    @if (lec.IsUnlocked)
+                                                    {
+                                                        <a asp-controller="Lectures" asp-action="Details" asp-route-id="@lec.LectureId" class="btn btn-outline-primary btn-sm fw-bold">
+                                                            Перейти <i class="bi bi-arrow-right ms-1"></i>
+                                                        </a>
+                                                    }
+                                                    else
+                                                    {
+                                                        <button class="btn btn-sm btn-secondary" disabled>
+                                                            <i class="bi bi-lock-fill me-1"></i>Закрыто
+                                                        </button>
+                                                    }
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+}
+
+<!-- Test Attempts Table (Section 3.7) -->
+<div class="card shadow-sm border-0 rounded-3 mb-4">
+    <div class="card-header bg-white py-3 border-bottom">
+        <h5 class="fw-bold mb-0 text-dark">
+            <i class="bi bi-clipboard2-data text-primary me-2"></i>История моих попыток тестирования
+        </h5>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Название теста</th>
+                    <th>К лекции</th>
+                    <th>Номер попытки</th>
+                    <th>Результат (%)</th>
+                    <th>Баллы</th>
+                    <th>Статус</th>
+                    <th>Дата прохождения</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.RecentAttempts.Any())
+                {
+                    <tr>
+                        <td colspan="7" class="text-center py-4 text-muted">Вы пока не проходили тестирований. Выберите доступную лекцию выше.</td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var att in Model.RecentAttempts)
+                    {
+                        <tr>
+                            <td class="fw-bold">@att.Test?.Title</td>
+                            <td class="small">@att.Test?.Lecture?.Title</td>
+                            <td>№@att.AttemptNumber</td>
+                            <td>
+                                <strong class="@(att.IsPassed ? "text-success" : "text-danger")">@att.ScorePercent%</strong>
+                            </td>
+                            <td>@att.EarnedPoints / @att.TotalPoints</td>
+                            <td>
+                                @if (att.IsPassed)
+                                {
+                                    <span class="badge bg-success"><i class="bi bi-check-lg me-1"></i>Сдано</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger"><i class="bi bi-x-lg me-1"></i>Не сдано</span>
+                                }
+                            </td>
+                            <td class="small text-muted">@att.CompletedAt.ToString("dd.MM.yyyy HH:mm")</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

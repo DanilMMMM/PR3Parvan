@@ -1,0 +1,69 @@
+@model EduCabinet.Models.Lecture
+@{
+    ViewData["Title"] = "Добавление новой лекции";
+    var topic = ViewBag.Topic as EduCabinet.Models.Topic;
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-9">
+        <div class="card shadow-sm border-0 rounded-3">
+            <div class="card-header bg-success text-white py-3">
+                <h4 class="mb-0 fw-bold"><i class="bi bi-file-earmark-plus me-2"></i>Добавить новую лекцию</h4>
+                <small class="opacity-75">Тема: @topic?.Title (@topic?.Discipline?.Title)</small>
+            </div>
+            <div class="card-body p-4">
+                <form asp-action="Create" method="post" enctype="multipart/form-data">
+                    <input type="hidden" asp-for="TopicId" />
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <div class="row">
+                        <div class="col-md-9 mb-3">
+                            <label asp-for="Title" class="form-label fw-semibold">Название лекции</label>
+                            <input asp-for="Title" class="form-control" placeholder="Например: Лекция 4. Основы криптографии" autofocus />
+                            <span asp-validation-for="Title" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label asp-for="OrderIndex" class="form-label fw-semibold">Порядковый номер</label>
+                            <input asp-for="OrderIndex" type="number" class="form-control" min="1" />
+                            <span asp-validation-for="OrderIndex" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Description" class="form-label fw-semibold">Краткое описание (аннотация)</label>
+                        <textarea asp-for="Description" rows="2" class="form-control" placeholder="Краткая суть лекции..."></textarea>
+                        <span asp-validation-for="Description" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Content" class="form-label fw-semibold">Теоретический материал (HTML / текст)</label>
+                        <textarea asp-for="Content" rows="8" class="form-control font-monospace" placeholder="Введите текст лекции или HTML-разметку..."></textarea>
+                        <span asp-validation-for="Content" class="text-danger small"></span>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold"><i class="bi bi-paperclip me-1"></i>Прикрепить учебный материал (DOCX, PDF)</label>
+                            <input type="file" name="materialFile" class="form-control" accept=".docx,.pdf,.doc" />
+                            <small class="text-muted">Студенты смогут просматривать или скачивать этот документ</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="MinPassingScore" class="form-label fw-semibold">Проходной балл теста для разблокировки (%)</label>
+                            <input asp-for="MinPassingScore" type="number" class="form-control" min="1" max="100" />
+                            <small class="text-muted">По умолчанию 70% для открытия следующей лекции</small>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-3">
+                        <a asp-controller="Disciplines" asp-action="Details" asp-route-id="@topic?.DisciplineId" class="btn btn-outline-secondary">Отмена</a>
+                        <button type="submit" class="btn btn-success fw-bold px-4">Сохранить лекцию</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

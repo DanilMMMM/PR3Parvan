@@ -1,0 +1,201 @@
+@model EduCabinet.Models.Discipline
+@using EduCabinet.Models
+@{
+    ViewData["Title"] = Model.Title;
+    var isTeacher = User.IsInRole(UserRoles.Teacher);
+    var isStudent = User.IsInRole(UserRoles.Student);
+    var lecturesStatus = ViewBag.LecturesStatus as Dictionary<int, LectureItemViewModel> ?? new Dictionary<int, LectureItemViewModel>();
+    int progressPercent = ViewBag.ProgressPercent != null ? (int)ViewBag.ProgressPercent : 0;
+}
+
+<div class="mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-action="Index">Дисциплины</a></li>
+            <li class="breadcrumb-item active" aria-current="page">@Model.Title</li>
+        </ol>
+    </nav>
+
+    <div class="card shadow-sm border-0 rounded-3 mb-4">
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                <div>
+                    <h2 class="fw-bold text-dark mb-2">@Model.Title</h2>
+                    <p class="text-muted fs-6 mb-3">@Model.Description</p>
+                    <div class="d-flex align-items-center gap-3 text-muted small">
+                        <span><i class="bi bi-person-circle me-1"></i>Преподаватель: <strong>@Model.CreatedByTeacher?.FullName</strong></span>
+                        <span><i class="bi bi-calendar3 me-1"></i>Создан: @Model.CreatedAt.ToString("dd.MM.yyyy")</span>
+                    </div>
+                </div>
+                @if (isTeacher)
+                {
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-primary btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#addTopicModal">
+                            <i class="bi bi-folder-plus me-1"></i>Добавить тему
+                        </button>
+                        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-pencil me-1"></i>Редактировать
+                        </a>
+                    </div>
+                }
+            </div>
+
+            @if (isStudent)
+            {
+                <div class="mt-4 p-3 bg-light rounded border">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fw-bold text-dark"><i class="bi bi-award-fill text-warning me-1"></i>Ваш общий прогресс по дисциплине:</span>
+                        <span class="badge bg-primary fs-6">@progressPercent% завершено</span>
+                    </div>
+                    <div class="progress" style="height: 12px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width: @progressPercent%" aria-valuenow="@progressPercent" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<h4 class="fw-bold mb-3"><i class="bi bi-journal-bookmark me-2 text-primary"></i>Учебные темы и лекции</h4>
+
+@if (!Model.Topics.Any())
+{
+    <div class="alert alert-info">В этой дисциплине пока нет тем. Преподаватель может добавить их выше.</div>
+}
+else
+{
+    @foreach (var topic in Model.Topics.OrderBy(t => t.OrderIndex))
+    {
+        <div class="card shadow-sm border-0 rounded-3 mb-4">
+            <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0 text-dark">
+                    <i class="bi bi-folder2-open text-warning me-2"></i>@topic.Title
+                </h5>
+                @if (isTeacher)
+                {
+                    <a asp-controller="Lectures" asp-action="Create" asp-route-topicId="@topic.Id" class="btn btn-success btn-sm fw-bold">
+                        <i class="bi bi-plus-circle me-1"></i>Добавить лекцию
+                    </a>
+                }
+            </div>
+            <div class="list-group list-group-flush">
+                @if (!topic.Lectures.Any())
+                {
+                    <div class="list-group-item text-muted py-3">В этой теме пока нет лекций.</div>
+                }
+                else
+                {
+                    @foreach (var lecture in topic.Lectures.OrderBy(l => l.OrderIndex))
+                    {
+                        bool isUnlocked = true;
+                        bool isCompleted = false;
+                        int? score = null;
+
+                        if (isStudent && lecturesStatus.TryGetValue(lecture.Id, out var status))
+                        {
+                            isUnlocked = status.IsUnlocked;
+                            isCompleted = status.IsCompleted;
+                            score = status.BestScorePercent;
+                        }
+
+                        <div class="list-group-item p-3 d-flex justify-content-between align-items-center @(!isUnlocked ? "bg-light opacity-75" : "")">
+                            <div class="d-flex align-items-start gap-3">
+                                <div class="mt-1">
+                                    @if (isCompleted)
+                                    {
+                                        <i class="bi bi-check-circle-fill text-success fs-4" title="Лекция освоена"></i>
+                                    }
+                                    else if (isUnlocked)
+                                    {
+                                        <i class="bi bi-unlock-fill text-primary fs-4" title="Доступно для изучения"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-lock-fill text-danger fs-4" title="Доступ закрыт"></i>
+                                    }
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold mb-1 text-dark">@lecture.Title</h6>
+                                    <p class="text-muted small mb-1">@lecture.Description</p>
+                                    <div class="d-flex gap-2 align-items-center">
+                                        @if (lecture.Tests.Any())
+                                        {
+                                            <span class="badge bg-secondary-subtle text-dark border">
+                                                <i class="bi bi-patch-question me-1"></i>Тест (порог @lecture.MinPassingScore%)
+                                            </span>
+                                        }
+                                        @if (!string.IsNullOrEmpty(lecture.FilePath))
+                                        {
+                                            <span class="badge bg-info-subtle text-info-emphasis border">
+                                                <i class="bi bi-file-earmark-word me-1"></i>Конспект (@lecture.OriginalFileName)
+                                            </span>
+                                        }
+                                        @if (isCompleted)
+                                        {
+                                            <span class="badge bg-success">
+                                                <i class="bi bi-check2"></i> Освоено @(score.HasValue ? $"({score}%)" : "")
+                                            </span>
+                                        }
+                                        @if (isStudent && !isUnlocked)
+                                        {
+                                            <span class="badge bg-danger">
+                                                <i class="bi bi-lock"></i> Закрыто (требуется сдать предыдущий тест)
+                                            </span>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                @if (isTeacher || isUnlocked)
+                                {
+                                    <a asp-controller="Lectures" asp-action="Details" asp-route-id="@lecture.Id" class="btn btn-primary btn-sm fw-bold px-3">
+                                        Изучить материал <i class="bi bi-arrow-right ms-1"></i>
+                                    </a>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-secondary btn-sm" disabled title="Пройдите предыдущие темы">
+                                        <i class="bi bi-lock-fill me-1"></i>Заблокировано
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    }
+}
+
+<!-- Modal for adding topic -->
+@if (isTeacher)
+{
+    <div class="modal fade" id="addTopicModal" tabindex="-1" aria-labelledby="addTopicModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form asp-action="AddTopic" method="post">
+                    <input type="hidden" name="disciplineId" value="@Model.Id" />
+                    <div class="modal-header">
+                        <h5 class="modal-title fw-bold" id="addTopicModalLabel">Добавить учебную тему</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Название темы</label>
+                            <input type="text" name="title" class="form-control" required placeholder="Например: Тема 3. Сетевая безопасность" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Порядковый номер темы</label>
+                            <input type="number" name="orderIndex" class="form-control" value="@(Model.Topics.Count + 1)" min="1" />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                        <button type="submit" class="btn btn-primary fw-bold">Сохранить тему</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}

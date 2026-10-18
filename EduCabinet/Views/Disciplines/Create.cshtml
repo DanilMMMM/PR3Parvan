@@ -1,0 +1,40 @@
+@model EduCabinet.Models.Discipline
+@{
+    ViewData["Title"] = "Создание новой дисциплины";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-7">
+        <div class="card shadow-sm border-0 rounded-3">
+            <div class="card-header bg-primary text-white py-3">
+                <h4 class="mb-0 fw-bold"><i class="bi bi-folder-plus me-2"></i>Новая учебная дисциплина</h4>
+            </div>
+            <div class="card-body p-4">
+                <form asp-action="Create" method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="Title" class="form-label fw-semibold">Название дисциплины</label>
+                        <input asp-for="Title" class="form-control" placeholder="Например: Внедрение и поддержка компьютерных систем" autofocus />
+                        <span asp-validation-for="Title" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Description" class="form-label fw-semibold">Краткое описание курса</label>
+                        <textarea asp-for="Description" rows="4" class="form-control" placeholder="Опишите цели изучения, компетенции и структуру программы..."></textarea>
+                        <span asp-validation-for="Description" class="text-danger small"></span>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a asp-action="Index" class="btn btn-outline-secondary">Отмена</a>
+                        <button type="submit" class="btn btn-primary fw-bold px-4">Создать дисциплину</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

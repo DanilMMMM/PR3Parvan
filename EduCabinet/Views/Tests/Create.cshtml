@@ -1,0 +1,55 @@
+@model EduCabinet.Models.Test
+@{
+    ViewData["Title"] = "Создание теста";
+    var lecture = ViewBag.Lecture as EduCabinet.Models.Lecture;
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-7">
+        <div class="card shadow-sm border-0 rounded-3">
+            <div class="card-header bg-primary text-white py-3">
+                <h4 class="mb-0 fw-bold"><i class="bi bi-patch-question me-2"></i>Создать проверочный тест</h4>
+                <small class="opacity-75">К лекции: @lecture?.Title</small>
+            </div>
+            <div class="card-body p-4">
+                <form asp-action="Create" method="post">
+                    <input type="hidden" asp-for="LectureId" />
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="Title" class="form-label fw-semibold">Название теста</label>
+                        <input asp-for="Title" class="form-control" autofocus />
+                        <span asp-validation-for="Title" class="text-danger small"></span>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label asp-for="PassingScorePercent" class="form-label fw-semibold">Проходной балл (%)</label>
+                            <input asp-for="PassingScorePercent" type="number" class="form-control" min="1" max="100" />
+                            <span asp-validation-for="PassingScorePercent" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label asp-for="MaxAttempts" class="form-label fw-semibold">Лимит попыток</label>
+                            <input asp-for="MaxAttempts" type="number" class="form-control" min="1" max="10" />
+                            <span asp-validation-for="MaxAttempts" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label asp-for="TimeLimitMinutes" class="form-label fw-semibold">Лимит времени (мин.)</label>
+                            <input asp-for="TimeLimitMinutes" type="number" class="form-control" min="1" max="180" />
+                            <span asp-validation-for="TimeLimitMinutes" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-3">
+                        <a asp-controller="Lectures" asp-action="Details" asp-route-id="@Model.LectureId" class="btn btn-outline-secondary">Отмена</a>
+                        <button type="submit" class="btn btn-primary fw-bold px-4">Создать тест</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

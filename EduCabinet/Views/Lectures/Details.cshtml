@@ -1,0 +1,216 @@
+@model EduCabinet.Models.LectureDetailViewModel
+@using EduCabinet.Models
+@{
+    ViewData["Title"] = Model.Lecture.Title;
+    var isTeacher = User.IsInRole(UserRoles.Teacher);
+    var isStudent = User.IsInRole(UserRoles.Student);
+    var lecture = Model.Lecture;
+}
+
+<div class="mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Disciplines" asp-action="Index">Дисциплины</a></li>
+            <li class="breadcrumb-item"><a asp-controller="Disciplines" asp-action="Details" asp-route-id="@lecture.Topic?.DisciplineId">@lecture.Topic?.Discipline?.Title</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Лекция @lecture.OrderIndex</li>
+        </ol>
+    </nav>
+
+    <div class="card shadow-sm border-0 rounded-3 mb-4">
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                <div>
+                    <span class="badge bg-secondary-subtle text-secondary border mb-2">@lecture.Topic?.Title</span>
+                    <h2 class="fw-bold text-dark mb-2">@lecture.Title</h2>
+                    <p class="text-muted fs-6 mb-3">@lecture.Description</p>
+                </div>
+                @if (isTeacher)
+                {
+                    <div class="d-flex gap-2">
+                        <a asp-action="Edit" asp-route-id="@lecture.Id" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-pencil me-1"></i>Редактировать
+                        </a>
+                        @if (!lecture.Tests.Any())
+                        {
+                            <a asp-controller="Tests" asp-action="Create" asp-route-lectureId="@lecture.Id" class="btn btn-primary btn-sm fw-bold">
+                                <i class="bi bi-plus-circle me-1"></i>Добавить тест
+                            </a>
+                        }
+                    </div>
+                }
+            </div>
+
+            <!-- Download lecture file bar -->
+            @if (!string.IsNullOrEmpty(lecture.FilePath))
+            {
+                <div class="p-3 bg-light rounded border d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-file-earmark-word-fill text-primary fs-3"></i>
+                        <div>
+                            <div class="fw-bold">@lecture.OriginalFileName</div>
+                            <div class="small text-muted">Полный конспект и методические указания к лекции</div>
+                        </div>
+                    </div>
+                    <a asp-action="DownloadMaterial" asp-route-id="@lecture.Id" class="btn btn-outline-primary btn-sm fw-bold">
+                        <i class="bi bi-download me-1"></i>Скачать документ
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Theory Section -->
+<div class="card shadow-sm border-0 rounded-3 mb-4">
+    <div class="card-header bg-white py-3 border-bottom">
+        <h5 class="fw-bold mb-0 text-dark">
+            <i class="bi bi-book text-primary me-2"></i>Теоретический материал лекции
+        </h5>
+    </div>
+    <div class="card-body p-4 text-dark fs-6" style="line-height: 1.7;">
+        @Html.Raw(lecture.Content)
+    </div>
+</div>
+
+<!-- Control Questions (Section 3.4 of assignment) -->
+@if (Model.HasControlQuestions)
+{
+    <div class="card shadow-sm border-0 rounded-3 mb-4">
+        <div class="card-header bg-white py-3 border-bottom">
+            <h5 class="fw-bold mb-0 text-dark">
+                <i class="bi bi-question-circle text-warning me-2"></i>Самопроверка: Контрольные вопросы к лекции
+            </h5>
+        </div>
+        <div class="card-body p-4">
+            <p class="text-muted small mb-4">
+                Ответьте на контрольные вопросы для закрепления материала перед переходом к итоговому тестированию.
+            </p>
+
+            @foreach (var cq in lecture.ControlQuestions.OrderBy(q => q.OrderIndex))
+            {
+                <div class="mb-4 p-3 bg-light rounded border" id="cq-card-@cq.Id">
+                    <div class="fw-bold mb-2">
+                        <span class="badge bg-secondary me-2">Вопрос @cq.OrderIndex</span>
+                        @cq.QuestionText
+                    </div>
+
+                    <div class="row align-items-center g-2 mt-1">
+                        <div class="col-md-7">
+                            <input type="text" class="form-control" id="cq-input-@cq.Id" placeholder="Введите ваш ответ..." />
+                        </div>
+                        <div class="col-md-3">
+                            <button type="button" class="btn btn-outline-primary btn-sm fw-bold w-100" onclick="checkCq(@cq.Id)">
+                                <i class="bi bi-check2 me-1"></i>Проверить ответ
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="cq-feedback-@cq.Id" class="mt-2 small" style="display: none;"></div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+<!-- Test & Next Lecture Unlock Section (Section 3.5 & 3.6 of assignment) -->
+<div class="card shadow-sm border-0 rounded-3 mb-5 border-start border-4 border-primary">
+    <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <h5 class="fw-bold mb-1">
+                    <i class="bi bi-patch-check-fill text-primary me-2"></i>Контрольное тестирование и аттестация темы
+                </h5>
+                <p class="text-muted small mb-0">
+                    Условие перехода к следующей лекции: сдать проверочный тест с результатом не менее <strong>@lecture.MinPassingScore%</strong>.
+                </p>
+            </div>
+
+            <div>
+                @if (Model.Test != null)
+                {
+                    if (Model.IsCompleted)
+                    {
+                        <div class="d-flex align-items-center gap-3">
+                            <span class="badge bg-success fs-6 p-2">
+                                <i class="bi bi-check-all me-1"></i>Тест сдан успешно! (@Model.BestAttempt?.ScorePercent%)
+                            </span>
+                            @if (Model.RemainingAttempts > 0)
+                            {
+                                <a asp-controller="Tests" asp-action="Take" asp-route-id="@Model.Test.Id" class="btn btn-outline-secondary btn-sm">
+                                    Улучшить результат (осталось попыток: @Model.RemainingAttempts)
+                                </a>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        if (Model.RemainingAttempts > 0 || isTeacher)
+                        {
+                            <a asp-controller="Tests" asp-action="Take" asp-route-id="@Model.Test.Id" class="btn btn-primary fw-bold px-4 py-2 shadow-sm">
+                                <i class="bi bi-pencil-square me-2"></i>Пройти тестирование (@(isTeacher ? "Предпросмотр" : $"Осталось попыток: {Model.RemainingAttempts}"))
+                            </a>
+                        }
+                        else
+                        {
+                            <div class="alert alert-danger mb-0 py-2">
+                                <i class="bi bi-x-circle me-1"></i>Попытки исчерпаны. Обратитесь к преподавателю для сброса.
+                            </div>
+                        }
+                    }
+                }
+                else
+                {
+                    <span class="badge bg-secondary">Тестирование для этой лекции пока не добавлено</span>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function checkCq(questionId) {
+            var answer = document.getElementById('cq-input-' + questionId).value;
+            var feedback = document.getElementById('cq-feedback-' + questionId);
+
+            if (!answer.trim()) {
+                feedback.className = "mt-2 small text-warning";
+                feedback.innerText = "Пожалуйста, введите ответ.";
+                feedback.style.display = "block";
+                return;
+            }
+
+            var token = $('input[name="__RequestVerificationToken"]').val();
+
+            $.ajax({
+                url: '/Lectures/CheckControlQuestion',
+                type: 'POST',
+                data: {
+                    questionId: questionId,
+                    studentAnswer: answer,
+                    __RequestVerificationToken: token
+                },
+                headers: {
+                    "RequestVerificationToken": token
+                },
+                success: function (res) {
+                    feedback.style.display = "block";
+                    if (res.isCorrect) {
+                        feedback.className = "mt-2 small text-success fw-bold";
+                        feedback.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i>' + res.message;
+                    } else {
+                        feedback.className = "mt-2 small text-danger";
+                        feedback.innerHTML = '<i class="bi bi-x-circle-fill me-1"></i>' + res.message;
+                    }
+                },
+                error: function () {
+                    // Fallback comparison
+                    feedback.style.display = "block";
+                    feedback.className = "mt-2 small text-info";
+                    feedback.innerText = "Ответ принят к рассмотрению.";
+                }
+            });
+        }
+    </script>
+}
+<form id="tokenForm">@Html.AntiForgeryToken()</form>

@@ -1,0 +1,68 @@
+@model IEnumerable<EduCabinet.Models.Discipline>
+@using EduCabinet.Models
+@{
+    ViewData["Title"] = "Учебные дисциплины";
+    var isTeacher = User.IsInRole(UserRoles.Teacher);
+    var isStudent = User.IsInRole(UserRoles.Student);
+    var progressDict = ViewBag.ProgressDict as Dictionary<int, int> ?? new Dictionary<int, int>();
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-1"><i class="bi bi-book-half text-primary me-2"></i>Учебные дисциплины</h2>
+        <p class="text-muted mb-0">Каталог доступных курсов и учебных материалов</p>
+    </div>
+    @if (isTeacher)
+    {
+        <a asp-action="Create" class="btn btn-primary fw-bold shadow-sm">
+            <i class="bi bi-plus-lg me-1"></i>Создать новую дисциплину
+        </a>
+    }
+</div>
+
+<div class="row g-4">
+    @foreach (var d in Model)
+    {
+        int progress = progressDict.ContainsKey(d.Id) ? progressDict[d.Id] : 0;
+        int totalLectures = d.Topics.SelectMany(t => t.Lectures).Count();
+
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm border-0 rounded-3 d-flex flex-column">
+                <div class="card-body p-4 d-flex flex-column">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <span class="badge bg-secondary-subtle text-secondary border">Темы: @d.Topics.Count | Лекции: @totalLectures</span>
+                        @if (isTeacher)
+                        {
+                            <span class="badge bg-warning text-dark"><i class="bi bi-pencil-square"></i> Автор курса</span>
+                        }
+                    </div>
+
+                    <h5 class="card-title fw-bold text-dark mt-2 mb-3">@d.Title</h5>
+                    <p class="card-text text-muted flex-grow-1 small">
+                        @(string.IsNullOrEmpty(d.Description) ? "Описание дисциплины не указано." : d.Description)
+                    </p>
+
+                    @if (isStudent)
+                    {
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between small text-muted mb-1">
+                                <span>Прогресс освоения:</span>
+                                <span class="fw-bold text-primary">@progress%</span>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: @progress%" aria-valuenow="@progress" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        </div>
+                    }
+
+                    <div class="mt-auto pt-3 border-top d-flex justify-content-between align-items-center">
+                        <small class="text-muted"><i class="bi bi-person me-1"></i>@d.CreatedByTeacher?.FullName</small>
+                        <a asp-action="Details" asp-route-id="@d.Id" class="btn btn-outline-primary btn-sm fw-bold">
+                            Открыть курс <i class="bi bi-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
