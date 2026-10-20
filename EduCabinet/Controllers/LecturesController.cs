@@ -285,5 +285,53 @@ namespace EduCabinet.Controllers
                 message = isCorrect ? "Верно! Ответ правильный." : "Неверно. Попробуйте еще раз или сверьтесь с текстом лекции."
             });
         }
+
+        // POST: /Lectures/AddControlQuestion
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = UserRoles.Teacher)]
+        public async Task<IActionResult> AddControlQuestion(int lectureId, string questionText, string correctAnswer, int orderIndex)
+        {
+            var lecture = await _context.Lectures.FindAsync(lectureId);
+            if (lecture == null) return NotFound();
+
+            if (string.IsNullOrWhiteSpace(questionText) || string.IsNullOrWhiteSpace(correctAnswer))
+            {
+                TempData["ErrorMessage"] = "Текст контрольного вопроса и правильный ответ не могут быть пустыми.";
+                return RedirectToAction(nameof(Details), new { id = lectureId });
+            }
+
+            var cq = new ControlQuestion
+            {
+                LectureId = lectureId,
+                QuestionText = questionText.Trim(),
+                QuestionType = "TextAnswer",
+                CorrectAnswer = correctAnswer.Trim(),
+                OrderIndex = orderIndex <= 0 ? 1 : orderIndex
+            };
+
+            _context.ControlQuestions.Add(cq);
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Контрольный вопрос успешно добавлен к лекции!";
+            return RedirectToAction(nameof(Details), new { id = lectureId });
+        }
+
+        // POST: /Lectures/DeleteControlQuestion
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = UserRoles.Teacher)]
+        public async Task<IActionResult> DeleteControlQuestion(int id, int lectureId)
+        {
+            var cq = await _context.ControlQuestions.FindAsync(id);
+            if (cq != null)
+            {
+                _context.ControlQuestions.Remove(cq);
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Контрольный вопрос удален.";
+            }
+
+            return RedirectToAction(nameof(Details), new { id = lectureId });
+        }
     }
 }

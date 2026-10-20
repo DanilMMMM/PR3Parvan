@@ -1,0 +1,241 @@
+@model EduCabinet.Models.Test
+@{
+    ViewData["Title"] = "Управление вопросами теста: " + Model.Title;
+}
+
+<div class="mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Disciplines" asp-action="Index">Дисциплины</a></li>
+            <li class="breadcrumb-item"><a asp-controller="Disciplines" asp-action="Details" asp-route-id="@Model.Lecture?.Topic?.DisciplineId">@Model.Lecture?.Topic?.Discipline?.Title</a></li>
+            <li class="breadcrumb-item"><a asp-controller="Lectures" asp-action="Details" asp-route-id="@Model.LectureId">@Model.Lecture?.Title</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Редактор теста</li>
+        </ol>
+    </nav>
+
+    <div class="card shadow-sm border-0 rounded-3 mb-4">
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                <div>
+                    <span class="badge bg-primary mb-2">Настройка тестирования</span>
+                    <h3 class="fw-bold text-dark mb-1"><i class="bi bi-patch-question-fill text-warning me-2"></i>@Model.Title</h3>
+                    <div class="text-muted small">
+                        <span>К лекции: <strong>@Model.Lecture?.Title</strong></span> | 
+                        <span>Проходной балл: <strong>@Model.PassingScorePercent%</strong></span> | 
+                        <span>Попыток: <strong>@Model.MaxAttempts</strong></span> | 
+                        <span>Лимит времени: <strong>@Model.TimeLimitMinutes мин.</strong></span>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <a asp-action="Take" asp-route-id="@Model.Id" class="btn btn-outline-primary btn-sm fw-bold">
+                        <i class="bi bi-eye me-1"></i>Предпросмотр
+                    </a>
+                    <a asp-controller="Lectures" asp-action="Details" asp-route-id="@Model.LectureId" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-arrow-left me-1"></i>Вернуться к лекции
+                    </a>
+                    <form asp-action="DeleteTest" method="post" onsubmit="return confirm('Вы действительно хотите удалить этот тест целиком? Все вопросы будут удалены.');" class="d-inline">
+                        <input type="hidden" name="testId" value="@Model.Id" />
+                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                            <i class="bi bi-trash me-1"></i>Удалить тест
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Questions List -->
+<div class="card shadow-sm border-0 rounded-3 mb-4">
+    <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+        <h5 class="fw-bold mb-0 text-dark">
+            <i class="bi bi-list-ol text-primary me-2"></i>Список вопросов теста (всего: @Model.Questions.Count)
+        </h5>
+        <a href="#addQuestionCard" class="btn btn-success btn-sm fw-bold">
+            <i class="bi bi-plus-lg me-1"></i>Добавить вопрос
+        </a>
+    </div>
+    <div class="card-body p-4">
+        @if (!Model.Questions.Any())
+        {
+            <div class="alert alert-warning d-flex align-items-center">
+                <i class="bi bi-exclamation-circle-fill me-2 fs-5"></i>
+                <div>
+                    <strong>В тесте пока нет вопросов!</strong> Студенты не смогут сдать тест, пока вы не добавите хотя бы один вопрос с помощью формы ниже.
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="accordion" id="questionsAccordion">
+                @for (int i = 0; i < Model.Questions.Count; i++)
+                {
+                    var q = Model.Questions.ElementAt(i);
+                    <div class="card mb-3 border">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center py-3">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-primary">Вопрос @(i + 1)</span>
+                                <span class="fw-bold text-dark">@q.QuestionText</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-secondary">
+                                    @(q.QuestionType == "SingleChoice" ? "Один ответ" : (q.QuestionType == "MultipleChoice" ? "Несколько ответов" : "Текстовый ответ"))
+                                </span>
+                                <span class="badge bg-info text-dark">@q.Points балл(ов)</span>
+                                <form asp-action="DeleteQuestion" method="post" onsubmit="return confirm('Удалить этот вопрос?');" class="d-inline">
+                                    <input type="hidden" name="questionId" value="@q.Id" />
+                                    <button type="submit" class="btn btn-outline-danger btn-sm py-0 px-2" title="Удалить вопрос">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="small text-muted mb-2">Варианты ответов / эталон:</div>
+                            @if (q.QuestionType == "TextAnswer")
+                            {
+                                var correct = q.Options.FirstOrDefault()?.OptionText ?? "Соль";
+                                <div class="p-2 bg-success-subtle text-success-emphasis rounded border border-success-subtle fw-semibold">
+                                    <i class="bi bi-check-circle-fill me-1"></i>Правильный текстовый ответ: <strong>«@correct»</strong>
+                                </div>
+                            }
+                            else
+                            {
+                                <ul class="list-group list-group-flush">
+                                    @foreach (var opt in q.Options)
+                                    {
+                                        <li class="list-group-item d-flex justify-content-between align-items-center py-2 @(opt.IsCorrect ? "bg-success-subtle text-success-emphasis fw-bold" : "")">
+                                            <span>
+                                                @if (opt.IsCorrect)
+                                                {
+                                                    <i class="bi bi-check2-circle text-success me-2 fs-5"></i>
+                                                }
+                                                else
+                                                {
+                                                    <i class="bi bi-circle text-muted me-2"></i>
+                                                }
+                                                @opt.OptionText
+                                            </span>
+                                            @if (opt.IsCorrect)
+                                            {
+                                                <span class="badge bg-success">Верный ответ</span>
+                                            }
+                                        </li>
+                                    }
+                                </ul>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Add Question Form -->
+<div class="card shadow-sm border-0 rounded-3 mb-5 border-start border-4 border-success" id="addQuestionCard">
+    <div class="card-header bg-white py-3 border-bottom">
+        <h5 class="fw-bold mb-0 text-success">
+            <i class="bi bi-plus-circle-fill me-2"></i>Добавить новый вопрос в тест
+        </h5>
+    </div>
+    <div class="card-body p-4">
+        <form asp-action="AddQuestion" method="post">
+            <input type="hidden" name="testId" value="@Model.Id" />
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Текст вопроса <span class="text-danger">*</span></label>
+                <textarea name="questionText" class="form-control" rows="2" placeholder="Например: Какой протокол обеспечивает защищённое соединение?" required></textarea>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-6 mb-2">
+                    <label class="form-label fw-semibold">Тип вопроса</label>
+                    <select id="questionTypeSelect" name="questionType" class="form-select" onchange="switchQuestionType()">
+                        <option value="SingleChoice">Один правильный ответ (Single Choice)</option>
+                        <option value="MultipleChoice">Несколько правильных ответов (Multiple Choice)</option>
+                        <option value="TextAnswer">Ввод краткого слова или термина (Text Answer)</option>
+                    </select>
+                </div>
+                <div class="col-md-6 mb-2">
+                    <label class="form-label fw-semibold">Количество баллов за верный ответ</label>
+                    <input type="number" name="points" class="form-control" value="1" min="1" max="10" />
+                </div>
+            </div>
+
+            <!-- Single Choice Block -->
+            <div id="singleChoiceBlock" class="p-3 bg-light rounded border mb-3">
+                <label class="form-label fw-semibold mb-2">
+                    <i class="bi bi-ui-radios text-primary me-1"></i>Варианты ответов (отметьте переключателем правильный):
+                </label>
+
+                @for (int idx = 0; idx < 4; idx++)
+                {
+                    <div class="input-group mb-2">
+                        <div class="input-group-text">
+                            <input class="form-check-input mt-0" type="radio" name="singleCorrectIndex" value="@idx" @(idx == 0 ? "checked" : "") title="Отметить как правильный" />
+                        </div>
+                        <input type="text" name="singleOptions" class="form-control" placeholder="Вариант ответа @(idx + 1) @(idx < 2 ? "(обязательно)" : "(необязательно)")" @(idx < 2 ? "required" : "") />
+                    </div>
+                }
+                <small class="text-muted">Первый вариант с точкой будет считаться правильным. Можно заполнить 2, 3 или 4 варианта.</small>
+            </div>
+
+            <!-- Multiple Choice Block -->
+            <div id="multiChoiceBlock" class="p-3 bg-light rounded border mb-3" style="display: none;">
+                <label class="form-label fw-semibold mb-2">
+                    <i class="bi bi-ui-checks text-primary me-1"></i>Варианты ответов (отметьте галочками все правильные):
+                </label>
+
+                @for (int idx = 0; idx < 4; idx++)
+                {
+                    <div class="input-group mb-2">
+                        <div class="input-group-text">
+                            <input class="form-check-input mt-0" type="checkbox" name="multiCorrectIndices" value="@idx" @(idx < 2 ? "checked" : "") title="Отметить как правильный" />
+                        </div>
+                        <input type="text" name="multiOptions" class="form-control" placeholder="Вариант ответа @(idx + 1)" />
+                    </div>
+                }
+                <small class="text-muted">Отметьте галочками все правильные ответы (студент должен выбрать все отмеченные).</small>
+            </div>
+
+            <!-- Text Answer Block -->
+            <div id="textAnswerBlock" class="p-3 bg-light rounded border mb-3" style="display: none;">
+                <label class="form-label fw-semibold mb-2">
+                    <i class="bi bi-input-cursor-text text-primary me-1"></i>Правильный эталонный ответ (слово или термин):
+                </label>
+                <input type="text" name="textAnswerCorrect" class="form-control" placeholder="Например: Соль или Транзакция" />
+                <small class="text-muted">Проверка выполняется с игнорированием регистра символов (например, «соль» и «Соль» засчитаются как верные).</small>
+            </div>
+
+            <div class="d-flex justify-content-end">
+                <button type="submit" class="btn btn-success fw-bold px-4">
+                    <i class="bi bi-check-lg me-1"></i>Сохранить вопрос в тест
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function switchQuestionType() {
+            var selected = document.getElementById('questionTypeSelect').value;
+            var singleBlock = document.getElementById('singleChoiceBlock');
+            var multiBlock = document.getElementById('multiChoiceBlock');
+            var textBlock = document.getElementById('textAnswerBlock');
+
+            singleBlock.style.display = 'none';
+            multiBlock.style.display = 'none';
+            textBlock.style.display = 'none';
+
+            if (selected === 'SingleChoice') {
+                singleBlock.style.display = 'block';
+            } else if (selected === 'MultipleChoice') {
+                multiBlock.style.display = 'block';
+            } else if (selected === 'TextAnswer') {
+                textBlock.style.display = 'block';
+            }
+        }
+    </script>
+}

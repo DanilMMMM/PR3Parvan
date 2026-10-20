@@ -335,13 +335,183 @@ namespace EduCabinet.Controllers
                 });
                 await _context.SaveChangesAsync();
 
-                TempData["SuccessMessage"] = "Тест успешно создан!";
-                return RedirectToAction("Details", "Lectures", new { id = test.LectureId });
+                TempData["SuccessMessage"] = "Тест успешно создан! Теперь добавьте проверочные вопросы.";
+                return RedirectToAction(nameof(Manage), new { id = test.Id });
             }
 
             var lecture = await _context.Lectures.FindAsync(test.LectureId);
             ViewBag.Lecture = lecture;
             return View(test);
+        }
+
+        // GET: /Tests/Manage/5
+        [Authorize(Roles = UserRoles.Teacher)]
+        public async Task<IActionResult> Manage(int id)
+        {
+            var test = await _context.Tests
+                .Include(t => t.Lecture)
+                .ThenInclude(l => l.Topic)
+                .ThenInclude(t => t.Discipline)
+                .Include(t => t.Questions)
+                .ThenInclude(q => q.Options)
+                .FirstOrDefaultAsync(t => t.Id == id);
+
+            if (test == null) return NotFound();
+
+            return View(test);
+        }
+
+        // POST: /Tests/AddQuestion
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = UserRoles.Teacher)]
+        public async Task<IActionResult> AddQuestion(
+            int testId,
+            string questionText,
+            string questionType,
+            int points,
+            List<string>? singleOptions,
+            int? singleCorrectIndex,
+            List<string>? multiOptions,
+            List<int>? multiCorrectIndices,
+            string? textAnswerCorrect)
+        {
+            var test = await _context.Tests.FindAsync(testId);
+            if (test == null) return NotFound();
+
+            if (string.IsNullOrWhiteSpace(questionText))
+            {
+                TempData["ErrorMessage"] = "Текст вопроса не может быть пустым.";
+                return RedirectToAction(nameof(Manage), new { id = testId });
+            }
+
+            var question = new TestQuestion
+            {
+                TestId = testId,
+                QuestionText = questionText.Trim(),
+                QuestionType = questionType,
+                Points = points <= 0 ? 1 : points
+            };
+
+            _context.TestQuestions.Add(question);
+            await _context.SaveChangesAsync();
+
+            if (questionType == "SingleChoice" && singleOptions != null)
+            {
+                int correctIdx = singleCorrectIndex ?? 0;
+                for (int i = 0; i < singleOptions.Count; i++)
+                {
+                    var optText = singleOptions[i]?.Trim();
+                    if (!string.IsNullOrWhiteSpace(optText))
+                    {
+                        _context.AnswerOptions.Add(new AnswerOption
+                        {
+                            QuestionId = question.Id,
+                            OptionText = optText,
+                            IsCorrect = (i == correctIdx)
+                        });
+                    }
+                }
+            }
+            else if (questionType == "MultipleChoice" && multiOptions != null)
+            {
+                var correctSet = (multiCorrectIndices ?? new List<int>()).ToHashSet();
+                for (int i = 0; i < multiOptions.Count; i++)
+                {
+                    var optText = multiOptions[i]?.Trim();
+                    if (!string.IsNullOrWhiteSpace(optText))
+                    {
+                        _context.AnswerOptions.Add(new AnswerOption
+                        {
+                            QuestionId = question.Id,
+                            OptionText = optText,
+                            IsCorrect = correctSet.Contains(i)
+                        });
+                    }
+                }
+            }
+            else if (questionType == "TextAnswer")
+            {
+                var correct = textAnswerCorrect?.Trim() ?? "Правильный ответ";
+                _context.AnswerOptions.Add(new AnswerOption
+                {
+                    QuestionId = question.Id,
+                    OptionText = correct,
+                    IsCorrect = true
+                });
+            }
+
+            await _context.SaveChangesAsync();
+
+            int teacherId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            _context.AuditLogs.Add(new AuditLog
+            {
+                TeacherId = teacherId,
+                Action = "AddTestQuestion",
+                Details = $"Добавлен вопрос в тест «{test.Title}» (вопрос: {question.QuestionText})",
+                Timestamp = DateTime.UtcNow
+            });
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Вопрос успешно добавлен в тест!";
+            return RedirectToAction(nameof(Manage), new { id = testId });
+        }
+
+        // POST: /Tests/DeleteQuestion
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = UserRoles.Teacher)]
+        public async Task<IActionResult> DeleteQuestion(int questionId)
+        {
+            var question = await _context.TestQuestions
+                .Include(q => q.Test)
+                .FirstOrDefaultAsync(q => q.Id == questionId);
+
+            if (question == null) return NotFound();
+
+            int testId = question.TestId;
+            _context.TestQuestions.Remove(question);
+            await _context.SaveChangesAsync();
+
+            int teacherId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            _context.AuditLogs.Add(new AuditLog
+            {
+                TeacherId = teacherId,
+                Action = "DeleteTestQuestion",
+                Details = $"Удален вопрос #{questionId} из теста #{testId}",
+                Timestamp = DateTime.UtcNow
+            });
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Вопрос удален из теста.";
+            return RedirectToAction(nameof(Manage), new { id = testId });
+        }
+
+        // POST: /Tests/DeleteTest
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = UserRoles.Teacher)]
+        public async Task<IActionResult> DeleteTest(int testId)
+        {
+            var test = await _context.Tests.FindAsync(testId);
+            if (test == null) return NotFound();
+
+            int lectureId = test.LectureId;
+            _context.Tests.Remove(test);
+            await _context.SaveChangesAsync();
+
+            int teacherId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            _context.AuditLogs.Add(new AuditLog
+            {
+                TeacherId = teacherId,
+                Action = "DeleteTest",
+                Details = $"Удален тест «{test.Title}» (Id={testId})",
+                Timestamp = DateTime.UtcNow
+            });
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Тест успешно удален.";
+            return RedirectToAction("Details", "Lectures", new { id = lectureId });
         }
     }
 }

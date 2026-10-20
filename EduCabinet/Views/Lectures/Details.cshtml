@@ -73,40 +73,70 @@
 </div>
 
 <!-- Control Questions (Section 3.4 of assignment) -->
-@if (Model.HasControlQuestions)
+@if (isTeacher || Model.HasControlQuestions)
 {
     <div class="card shadow-sm border-0 rounded-3 mb-4">
-        <div class="card-header bg-white py-3 border-bottom">
+        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
             <h5 class="fw-bold mb-0 text-dark">
                 <i class="bi bi-question-circle text-warning me-2"></i>Самопроверка: Контрольные вопросы к лекции
             </h5>
+            @if (isTeacher)
+            {
+                <button type="button" class="btn btn-outline-warning btn-sm fw-bold text-dark" data-bs-toggle="modal" data-bs-target="#addCqModal">
+                    <i class="bi bi-plus-lg me-1"></i>Добавить контрольный вопрос
+                </button>
+            }
         </div>
         <div class="card-body p-4">
             <p class="text-muted small mb-4">
                 Ответьте на контрольные вопросы для закрепления материала перед переходом к итоговому тестированию.
             </p>
 
-            @foreach (var cq in lecture.ControlQuestions.OrderBy(q => q.OrderIndex))
+            @if (!lecture.ControlQuestions.Any())
             {
-                <div class="mb-4 p-3 bg-light rounded border" id="cq-card-@cq.Id">
-                    <div class="fw-bold mb-2">
-                        <span class="badge bg-secondary me-2">Вопрос @cq.OrderIndex</span>
-                        @cq.QuestionText
-                    </div>
-
-                    <div class="row align-items-center g-2 mt-1">
-                        <div class="col-md-7">
-                            <input type="text" class="form-control" id="cq-input-@cq.Id" placeholder="Введите ваш ответ..." />
-                        </div>
-                        <div class="col-md-3">
-                            <button type="button" class="btn btn-outline-primary btn-sm fw-bold w-100" onclick="checkCq(@cq.Id)">
-                                <i class="bi bi-check2 me-1"></i>Проверить ответ
-                            </button>
-                        </div>
-                    </div>
-
-                    <div id="cq-feedback-@cq.Id" class="mt-2 small" style="display: none;"></div>
+                <div class="alert alert-light border text-muted">
+                    Контрольные вопросы для самопроверки пока не добавлены. Преподаватель может добавить их кнопкой выше.
                 </div>
+            }
+            else
+            {
+                @foreach (var cq in lecture.ControlQuestions.OrderBy(q => q.OrderIndex))
+                {
+                    <div class="mb-4 p-3 bg-light rounded border" id="cq-card-@cq.Id">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div class="fw-bold">
+                                <span class="badge bg-secondary me-2">Вопрос @cq.OrderIndex</span>
+                                @cq.QuestionText
+                            </div>
+                            @if (isTeacher)
+                            {
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-info text-dark">Эталон: @cq.CorrectAnswer</span>
+                                    <form asp-action="DeleteControlQuestion" method="post" onsubmit="return confirm('Удалить этот контрольный вопрос?');" class="d-inline">
+                                        <input type="hidden" name="id" value="@cq.Id" />
+                                        <input type="hidden" name="lectureId" value="@lecture.Id" />
+                                        <button type="submit" class="btn btn-outline-danger btn-sm py-0 px-2" title="Удалить">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="row align-items-center g-2 mt-1">
+                            <div class="col-md-7">
+                                <input type="text" class="form-control" id="cq-input-@cq.Id" placeholder="Введите ваш ответ..." />
+                            </div>
+                            <div class="col-md-3">
+                                <button type="button" class="btn btn-outline-primary btn-sm fw-bold w-100" onclick="checkCq(@cq.Id)">
+                                    <i class="bi bi-check2 me-1"></i>Проверить ответ
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="cq-feedback-@cq.Id" class="mt-2 small" style="display: none;"></div>
+                    </div>
+                }
             }
         </div>
     </div>
@@ -128,7 +158,18 @@
             <div>
                 @if (Model.Test != null)
                 {
-                    if (Model.IsCompleted)
+                    if (isTeacher)
+                    {
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <a asp-controller="Tests" asp-action="Manage" asp-route-id="@Model.Test.Id" class="btn btn-warning fw-bold shadow-sm">
+                                <i class="bi bi-gear-fill me-1"></i>Управление вопросами теста (@Model.Test.Questions.Count вопр.)
+                            </a>
+                            <a asp-controller="Tests" asp-action="Take" asp-route-id="@Model.Test.Id" class="btn btn-outline-primary">
+                                <i class="bi bi-eye me-1"></i>Предпросмотр
+                            </a>
+                        </div>
+                    }
+                    else if (Model.IsCompleted)
                     {
                         <div class="d-flex align-items-center gap-3">
                             <span class="badge bg-success fs-6 p-2">
@@ -144,10 +185,10 @@
                     }
                     else
                     {
-                        if (Model.RemainingAttempts > 0 || isTeacher)
+                        if (Model.RemainingAttempts > 0)
                         {
                             <a asp-controller="Tests" asp-action="Take" asp-route-id="@Model.Test.Id" class="btn btn-primary fw-bold px-4 py-2 shadow-sm">
-                                <i class="bi bi-pencil-square me-2"></i>Пройти тестирование (@(isTeacher ? "Предпросмотр" : $"Осталось попыток: {Model.RemainingAttempts}"))
+                                <i class="bi bi-pencil-square me-2"></i>Пройти тестирование (Осталось попыток: @Model.RemainingAttempts)
                             </a>
                         }
                         else
@@ -160,12 +201,58 @@
                 }
                 else
                 {
-                    <span class="badge bg-secondary">Тестирование для этой лекции пока не добавлено</span>
+                    if (isTeacher)
+                    {
+                        <a asp-controller="Tests" asp-action="Create" asp-route-lectureId="@lecture.Id" class="btn btn-success fw-bold px-3 py-2 shadow-sm">
+                            <i class="bi bi-plus-circle me-1"></i>Создать тест к лекции
+                        </a>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary">Тестирование для этой лекции пока не добавлено</span>
+                    }
                 }
             </div>
         </div>
     </div>
 </div>
+
+<!-- Modal for adding Control Question -->
+@if (isTeacher)
+{
+    <div class="modal fade" id="addCqModal" tabindex="-1" aria-labelledby="addCqModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form asp-action="AddControlQuestion" method="post">
+                    <input type="hidden" name="lectureId" value="@lecture.Id" />
+                    <div class="modal-header">
+                        <h5 class="modal-title fw-bold" id="addCqModalLabel">Добавить контрольный вопрос</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Текст вопроса для самопроверки</label>
+                            <textarea name="questionText" class="form-control" rows="2" required placeholder="Например: Какой протокол обеспечивает защищённое соединение?"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Правильный эталонный ответ (слово или фраза)</label>
+                            <input type="text" name="correctAnswer" class="form-control" required placeholder="Например: HTTPS или Соль" />
+                            <small class="text-muted">С этим словом система автоматически сверит ответ студента.</small>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Порядковый номер</label>
+                            <input type="number" name="orderIndex" class="form-control" value="@(lecture.ControlQuestions.Count + 1)" min="1" />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                        <button type="submit" class="btn btn-warning fw-bold text-dark">Сохранить вопрос</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
 
 @section Scripts {
     <script>
