@@ -69,17 +69,36 @@ namespace EduCabinet.Controllers
                     MaxAttempts = test.MaxAttempts,
                     CurrentAttemptNumber = attemptsCount + 1,
                     TimeLimitMinutes = test.TimeLimitMinutes,
-                    Questions = test.Questions.Select(q => new QuestionTakeItem
+                    Questions = test.Questions.Select(q =>
                     {
-                        QuestionId = q.Id,
-                        QuestionText = q.QuestionText,
-                        QuestionType = q.QuestionType,
-                        Points = q.Points,
-                        Options = q.Options.Select(o => new OptionTakeItem
+                        var item = new QuestionTakeItem
                         {
-                            OptionId = o.Id,
-                            OptionText = o.OptionText
-                        }).ToList()
+                            QuestionId = q.Id,
+                            QuestionText = q.QuestionText,
+                            QuestionType = q.QuestionType,
+                            Points = q.Points,
+                            Options = q.Options.Select(o => new OptionTakeItem
+                            {
+                                OptionId = o.Id,
+                                OptionText = o.OptionText
+                            }).ToList()
+                        };
+
+                        if (q.QuestionType == "Matching")
+                        {
+                            var pairs = q.Options
+                                .Select(o => o.OptionText.Split(":::", 2, StringSplitOptions.TrimEntries))
+                                .Where(p => p.Length == 2)
+                                .ToList();
+
+                            item.MatchingTerms = pairs.Select(p => p[0]).ToList();
+                            var defs = pairs.Select(p => p[1]).ToList();
+                            var rng = new Random();
+                            item.MatchingDefinitions = defs.OrderBy(_ => rng.Next()).ToList();
+                            item.SelectedMatches = new List<string>(new string[item.MatchingTerms.Count]);
+                        }
+
+                        return item;
                     }).ToList()
                 };
 
@@ -97,17 +116,36 @@ namespace EduCabinet.Controllers
                 MaxAttempts = test.MaxAttempts,
                 CurrentAttemptNumber = 1,
                 TimeLimitMinutes = test.TimeLimitMinutes,
-                Questions = test.Questions.Select(q => new QuestionTakeItem
+                Questions = test.Questions.Select(q =>
                 {
-                    QuestionId = q.Id,
-                    QuestionText = q.QuestionText,
-                    QuestionType = q.QuestionType,
-                    Points = q.Points,
-                    Options = q.Options.Select(o => new OptionTakeItem
+                    var item = new QuestionTakeItem
                     {
-                        OptionId = o.Id,
-                        OptionText = o.OptionText
-                    }).ToList()
+                        QuestionId = q.Id,
+                        QuestionText = q.QuestionText,
+                        QuestionType = q.QuestionType,
+                        Points = q.Points,
+                        Options = q.Options.Select(o => new OptionTakeItem
+                        {
+                            OptionId = o.Id,
+                            OptionText = o.OptionText
+                        }).ToList()
+                    };
+
+                    if (q.QuestionType == "Matching")
+                    {
+                        var pairs = q.Options
+                            .Select(o => o.OptionText.Split(":::", 2, StringSplitOptions.TrimEntries))
+                            .Where(p => p.Length == 2)
+                            .ToList();
+
+                        item.MatchingTerms = pairs.Select(p => p[0]).ToList();
+                        var defs = pairs.Select(p => p[1]).ToList();
+                        var rng = new Random();
+                        item.MatchingDefinitions = defs.OrderBy(_ => rng.Next()).ToList();
+                        item.SelectedMatches = new List<string>(new string[item.MatchingTerms.Count]);
+                    }
+
+                    return item;
                 }).ToList()
             };
 
@@ -192,6 +230,76 @@ namespace EduCabinet.Controllers
                         SelectedOptionIdsJson = JsonSerializer.Serialize(chosenOptIds),
                         IsCorrect = isCorrect
                     });
+                }
+                else if (q.QuestionType == "Matching")
+                {
+                    var pairs = q.Options
+                        .Select(o => o.OptionText.Split(":::", 2, StringSplitOptions.TrimEntries))
+                        .Where(p => p.Length == 2)
+                        .ToList();
+
+                    var correctPairs = pairs.ToDictionary(p => p[0], p => p[1], StringComparer.OrdinalIgnoreCase);
+                    var matchingResultPairs = new List<MatchingResultPair>();
+                    bool allMatched = pairs.Count > 0;
+
+                    if (submittedQ?.MatchingTerms != null && submittedQ.MatchingTerms.Count > 0)
+                    {
+                        for (int tIdx = 0; tIdx < submittedQ.MatchingTerms.Count; tIdx++)
+                        {
+                            var term = submittedQ.MatchingTerms[tIdx]?.Trim() ?? "";
+                            var selectedDef = (submittedQ.SelectedMatches != null && tIdx < submittedQ.SelectedMatches.Count)
+                                ? submittedQ.SelectedMatches[tIdx]?.Trim() ?? ""
+                                : "";
+
+                            correctPairs.TryGetValue(term, out var correctDef);
+                            correctDef ??= "";
+
+                            bool isMatch = !string.IsNullOrEmpty(selectedDef) &&
+                                           string.Equals(selectedDef, correctDef, StringComparison.OrdinalIgnoreCase);
+
+                            if (!isMatch) allMatched = false;
+
+                            matchingResultPairs.Add(new MatchingResultPair
+                            {
+                                Term = term,
+                                SelectedDefinition = string.IsNullOrEmpty(selectedDef) ? "Не сопоставлено" : selectedDef,
+                                CorrectDefinition = correctDef,
+                                IsMatchCorrect = isMatch
+                            });
+                        }
+                    }
+                    else
+                    {
+                        allMatched = false;
+                    }
+
+                    isCorrect = allMatched && matchingResultPairs.Count > 0;
+                    userAnswerStr = string.Join("; ", matchingResultPairs.Select(p => $"{p.Term} ➔ {p.SelectedDefinition}"));
+                    correctAnswerStr = string.Join("; ", matchingResultPairs.Select(p => $"{p.Term} ➔ {p.CorrectDefinition}"));
+
+                    studentAnswers.Add(new StudentAnswer
+                    {
+                        QuestionId = q.Id,
+                        TextAnswer = JsonSerializer.Serialize(matchingResultPairs),
+                        IsCorrect = isCorrect
+                    });
+
+                    if (isCorrect)
+                    {
+                        earnedPoints += q.Points;
+                    }
+
+                    resultQuestions.Add(new QuestionResultItem
+                    {
+                        QuestionText = q.QuestionText,
+                        QuestionType = q.QuestionType,
+                        IsCorrect = isCorrect,
+                        UserAnswer = userAnswerStr,
+                        CorrectAnswer = correctAnswerStr,
+                        MatchingPairs = matchingResultPairs
+                    });
+
+                    continue;
                 }
                 else // TextAnswer
                 {
@@ -374,7 +482,9 @@ namespace EduCabinet.Controllers
             int? singleCorrectIndex,
             List<string>? multiOptions,
             List<int>? multiCorrectIndices,
-            string? textAnswerCorrect)
+            string? textAnswerCorrect,
+            List<string>? matchingTerms,
+            List<string>? matchingDefinitions)
         {
             var test = await _context.Tests.FindAsync(testId);
             if (test == null) return NotFound();
@@ -426,6 +536,23 @@ namespace EduCabinet.Controllers
                             QuestionId = question.Id,
                             OptionText = optText,
                             IsCorrect = correctSet.Contains(i)
+                        });
+                    }
+                }
+            }
+            else if (questionType == "Matching" && matchingTerms != null && matchingDefinitions != null)
+            {
+                for (int i = 0; i < matchingTerms.Count && i < matchingDefinitions.Count; i++)
+                {
+                    var term = matchingTerms[i]?.Trim();
+                    var def = matchingDefinitions[i]?.Trim();
+                    if (!string.IsNullOrWhiteSpace(term) && !string.IsNullOrWhiteSpace(def))
+                    {
+                        _context.AnswerOptions.Add(new AnswerOption
+                        {
+                            QuestionId = question.Id,
+                            OptionText = $"{term}:::{def}",
+                            IsCorrect = true
                         });
                     }
                 }

@@ -93,10 +93,48 @@
                                 </span>
                             </div>
                             <div class="small ms-4">
-                                <div><strong>Ваш ответ:</strong> @q.UserAnswer</div>
-                                @if (!q.IsCorrect)
+                                @if (q.QuestionType == "Matching" && q.MatchingPairs.Any())
                                 {
-                                    <div class="text-success mt-1"><strong>Правильный ответ:</strong> @q.CorrectAnswer</div>
+                                    <div class="table-responsive mt-2">
+                                        <table class="table table-sm table-bordered bg-white mb-0 align-middle">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Понятие / Термин</th>
+                                                    <th>Ваш выбор</th>
+                                                    <th>Правильное определение</th>
+                                                    <th class="text-center" style="width: 110px;">Результат</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var pair in q.MatchingPairs)
+                                                {
+                                                    <tr class="@(pair.IsMatchCorrect ? "table-success" : "table-danger")">
+                                                        <td class="fw-bold">@pair.Term</td>
+                                                        <td>@pair.SelectedDefinition</td>
+                                                        <td class="text-success fw-semibold">@pair.CorrectDefinition</td>
+                                                        <td class="text-center">
+                                                            @if (pair.IsMatchCorrect)
+                                                            {
+                                                                <span class="badge bg-success"><i class="bi bi-check-lg"></i> Верно</span>
+                                                            }
+                                                            else
+                                                            {
+                                                                <span class="badge bg-danger"><i class="bi bi-x-lg"></i> Ошибка</span>
+                                                            }
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div><strong>Ваш ответ:</strong> @q.UserAnswer</div>
+                                    @if (!q.IsCorrect)
+                                    {
+                                        <div class="text-success mt-1"><strong>Правильный ответ:</strong> @q.CorrectAnswer</div>
+                                    }
                                 }
                             </div>
                         </div>

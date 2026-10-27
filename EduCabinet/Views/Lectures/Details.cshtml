@@ -27,6 +27,9 @@
                 @if (isTeacher)
                 {
                     <div class="d-flex gap-2">
+                        <a asp-controller="Teacher" asp-action="LectureRoster" asp-route-lectureId="@lecture.Id" class="btn btn-outline-info btn-sm fw-bold">
+                            <i class="bi bi-people me-1"></i>Ведомость лекции
+                        </a>
                         <a asp-action="Edit" asp-route-id="@lecture.Id" class="btn btn-outline-secondary btn-sm">
                             <i class="bi bi-pencil me-1"></i>Редактировать
                         </a>

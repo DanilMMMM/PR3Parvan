@@ -81,6 +81,41 @@
                                         </div>
                                     }
                                 }
+                                else if (q.QuestionType == "Matching")
+                                {
+                                    <p class="text-muted small mb-2"><i class="bi bi-arrow-left-right me-1"></i>Установите соответствие между понятием (термином) и его определением (расшифровкой):</p>
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered align-middle mb-0 bg-white">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th style="width: 40%;"><i class="bi bi-tag-fill text-primary me-1"></i>Термин / Понятие</th>
+                                                    <th style="width: 60%;"><i class="bi bi-card-text text-success me-1"></i>Выберите определение / расшифровку</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @for (int termIdx = 0; termIdx < q.MatchingTerms.Count; termIdx++)
+                                                {
+                                                    var term = q.MatchingTerms[termIdx];
+                                                    <tr>
+                                                        <td class="fw-bold text-dark">
+                                                            <input type="hidden" name="Questions[@i].MatchingTerms[@termIdx]" value="@term" />
+                                                            <span>@term</span>
+                                                        </td>
+                                                        <td>
+                                                            <select name="Questions[@i].SelectedMatches[@termIdx]" class="form-select" required>
+                                                                <option value="">-- Выберите расшифровку --</option>
+                                                                @foreach (var def in q.MatchingDefinitions)
+                                                                {
+                                                                    <option value="@def">@def</option>
+                                                                }
+                                                            </select>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                }
                                 else // TextAnswer
                                 {
                                     <p class="text-muted small mb-2"><i class="bi bi-input-cursor-text me-1"></i>Введите краткий текстовый ответ или термин:</p>

@@ -237,7 +237,14 @@ namespace EduCabinet.Data
                 QuestionType = "TextAnswer",
                 Points = 1
             };
-            context.TestQuestions.AddRange(t1q1, t1q2, t1q3, t1q4);
+            var t1q5 = new TestQuestion
+            {
+                TestId = test1.Id,
+                QuestionText = "Установите соответствие между механизмом веб-безопасности и его функциональным назначением:",
+                QuestionType = "Matching",
+                Points = 2
+            };
+            context.TestQuestions.AddRange(t1q1, t1q2, t1q3, t1q4, t1q5);
             await context.SaveChangesAsync();
 
             // Answer options for Test 1
@@ -256,7 +263,12 @@ namespace EduCabinet.Data
                 new AnswerOption { QuestionId = t1q3.Id, OptionText = "SameSite=Strict или Lax (защита от CSRF)", IsCorrect = true },
                 new AnswerOption { QuestionId = t1q3.Id, OptionText = "AllowCrossDomainScripting=true", IsCorrect = false },
 
-                new AnswerOption { QuestionId = t1q4.Id, OptionText = "Соль", IsCorrect = true }
+                new AnswerOption { QuestionId = t1q4.Id, OptionText = "Соль", IsCorrect = true },
+
+                new AnswerOption { QuestionId = t1q5.Id, OptionText = "Криптографическая соль:::Уникальная случайная строка для защиты от радужных таблиц", IsCorrect = true },
+                new AnswerOption { QuestionId = t1q5.Id, OptionText = "Флаг HttpOnly:::Защита сессионных cookie от кражи через XSS-скрипты", IsCorrect = true },
+                new AnswerOption { QuestionId = t1q5.Id, OptionText = "Флаг SameSite:::Предотвращение межсайтовой подделки запросов (CSRF)", IsCorrect = true },
+                new AnswerOption { QuestionId = t1q5.Id, OptionText = "PBKDF2 / Argon2:::Медленный адаптивный алгоритм с большим числом итераций", IsCorrect = true }
             );
 
             // 8. Test for Lecture 2

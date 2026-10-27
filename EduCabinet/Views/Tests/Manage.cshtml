@@ -79,7 +79,7 @@
                             </div>
                             <div class="d-flex align-items-center gap-2">
                                 <span class="badge bg-secondary">
-                                    @(q.QuestionType == "SingleChoice" ? "Один ответ" : (q.QuestionType == "MultipleChoice" ? "Несколько ответов" : "Текстовый ответ"))
+                                    @(q.QuestionType == "SingleChoice" ? "Один ответ" : (q.QuestionType == "MultipleChoice" ? "Несколько ответов" : (q.QuestionType == "Matching" ? "Сопоставление" : "Текстовый ответ")))
                                 </span>
                                 <span class="badge bg-info text-dark">@q.Points балл(ов)</span>
                                 <form asp-action="DeleteQuestion" method="post" onsubmit="return confirm('Удалить этот вопрос?');" class="d-inline">
@@ -97,6 +97,29 @@
                                 var correct = q.Options.FirstOrDefault()?.OptionText ?? "Соль";
                                 <div class="p-2 bg-success-subtle text-success-emphasis rounded border border-success-subtle fw-semibold">
                                     <i class="bi bi-check-circle-fill me-1"></i>Правильный текстовый ответ: <strong>«@correct»</strong>
+                                </div>
+                            }
+                            else if (q.QuestionType == "Matching")
+                            {
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-bordered mb-0 align-middle">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th style="width: 40%;"><i class="bi bi-tag me-1"></i>Понятие / Термин</th>
+                                                <th style="width: 60%;"><i class="bi bi-card-text me-1"></i>Правильное определение / Расшифровка</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var opt in q.Options)
+                                            {
+                                                var parts = opt.OptionText.Split(":::", 2);
+                                                <tr>
+                                                    <td class="fw-bold text-primary">@(parts.Length > 0 ? parts[0] : opt.OptionText)</td>
+                                                    <td class="text-success fw-semibold"><i class="bi bi-check-lg me-1"></i>@(parts.Length > 1 ? parts[1] : "")</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
                                 </div>
                             }
                             else
@@ -154,6 +177,7 @@
                     <select id="questionTypeSelect" name="questionType" class="form-select" onchange="switchQuestionType()">
                         <option value="SingleChoice">Один правильный ответ (Single Choice)</option>
                         <option value="MultipleChoice">Несколько правильных ответов (Multiple Choice)</option>
+                        <option value="Matching">Сопоставление терминов и определений (Matching)</option>
                         <option value="TextAnswer">Ввод краткого слова или термина (Text Answer)</option>
                     </select>
                 </div>
@@ -199,6 +223,29 @@
                 <small class="text-muted">Отметьте галочками все правильные ответы (студент должен выбрать все отмеченные).</small>
             </div>
 
+            <!-- Matching Block -->
+            <div id="matchingBlock" class="p-3 bg-light rounded border mb-3" style="display: none;">
+                <label class="form-label fw-semibold mb-2">
+                    <i class="bi bi-arrow-left-right text-primary me-1"></i>Пары для сопоставления (Понятие ➔ Определение / Расшифровка):
+                </label>
+                <div class="row g-2 mb-2">
+                    <div class="col-md-5 fw-semibold text-muted small">Понятие / Термин (левая колонка)</div>
+                    <div class="col-md-7 fw-semibold text-muted small">Определение / Расшифровка (правая колонка)</div>
+                </div>
+                @for (int idx = 0; idx < 4; idx++)
+                {
+                    <div class="row g-2 mb-2">
+                        <div class="col-md-5">
+                            <input type="text" name="matchingTerms" class="form-control" placeholder="Термин @(idx + 1) @(idx < 2 ? "(обязательно)" : "(необязательно)")" />
+                        </div>
+                        <div class="col-md-7">
+                            <input type="text" name="matchingDefinitions" class="form-control" placeholder="Определение @(idx + 1) @(idx < 2 ? "(обязательно)" : "(необязательно)")" />
+                        </div>
+                    </div>
+                }
+                <small class="text-muted">Заполните от 2 до 4 пар. Студенту эти определения будут показаны в выпадающих списках в случайном порядке.</small>
+            </div>
+
             <!-- Text Answer Block -->
             <div id="textAnswerBlock" class="p-3 bg-light rounded border mb-3" style="display: none;">
                 <label class="form-label fw-semibold mb-2">
@@ -223,16 +270,20 @@
             var selected = document.getElementById('questionTypeSelect').value;
             var singleBlock = document.getElementById('singleChoiceBlock');
             var multiBlock = document.getElementById('multiChoiceBlock');
+            var matchingBlock = document.getElementById('matchingBlock');
             var textBlock = document.getElementById('textAnswerBlock');
 
             singleBlock.style.display = 'none';
             multiBlock.style.display = 'none';
+            matchingBlock.style.display = 'none';
             textBlock.style.display = 'none';
 
             if (selected === 'SingleChoice') {
                 singleBlock.style.display = 'block';
             } else if (selected === 'MultipleChoice') {
                 multiBlock.style.display = 'block';
+            } else if (selected === 'Matching') {
+                matchingBlock.style.display = 'block';
             } else if (selected === 'TextAnswer') {
                 textBlock.style.display = 'block';
             }
